@@ -51,7 +51,7 @@ int main (int argc, char* argv[])
 
   g_print ("generated (value = %i)\n", value);
 
-  delayed (value, 3000) >> [](std::future<int>& future) noexcept -> void
+  delayed (value, 2000) >> [](std::future<int>& future) noexcept -> void
     { g_print ("future fulfilled (value = %i)\n", future.get ()); };
 
   g_print ("running loop\n");

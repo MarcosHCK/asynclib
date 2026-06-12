@@ -66,9 +66,14 @@ namespace asynclib
 
   struct details::__future_host_checker
     {
+
       virtual ~__future_host_checker () noexcept { }
+
       virtual bool check () const noexcept = 0;
       virtual void dispatch () noexcept = 0;
+
+      static void destroy (void* _p_checker) noexcept
+        { delete (__future_host_checker*) _p_checker; }
     };
 
   template<details::Future _Future> struct details::__future_link_base: public __future_host_checker

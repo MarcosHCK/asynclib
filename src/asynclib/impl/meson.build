@@ -15,30 +15,25 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-__asynclib_src = [ 'asynclib.h' ]
+glib_dep = dependency ('glib-2.0', required: true)
 
-subdir ('impl')
+__asynclib_impl_src = [ 'slice.h' ]
 
-foreach bit: [ 'future' ] 
+foreach bit: [ 'checksource', 'checkthread', 'invoker' ] 
 
-  __asynclib_src += [ '@0@.cc'.format (bit) ]
-  __asynclib_src += [ '@0@.h'.format (bit) ]
+  __asynclib_impl_src += [ '@0@.cc'.format (bit) ]
+  __asynclib_impl_src += [ '@0@.h'.format (bit) ]
 endforeach
 
-foreach bit: [ 'co', 'op' ] 
-
-  __asynclib_src += [ 'future_@0@.h'.format (bit) ]
-endforeach
-
-__asynclib_lib = library ('asynclib',
-  c_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
+__asynclib_impl_lib = static_library ('asynclib-impl',
+  c_args: [ '-DG_LOG_DOMAIN="Asynclib.Implementation"', '-DG_LOG_USE_STRUCTURED=1',
             '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
             '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  cpp_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
+  cpp_args: [ '-DG_LOG_DOMAIN="Asynclib.Implementation"', '-DG_LOG_USE_STRUCTURED=1',
               '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
               '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  dependencies: [ config_dep, __asynclib_impl_dep ],
-  sources: __asynclib_src)
+  dependencies: [ config_dep, glib_dep ],
+  sources: __asynclib_impl_src)
 
-__asynclib_dep = declare_dependency (dependencies: [ config_dep ],
-  link_with: __asynclib_lib)
+__asynclib_impl_dep = declare_dependency (dependencies: [ config_dep, gio_dep ],
+  link_with: __asynclib_impl_lib)

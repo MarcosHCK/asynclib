@@ -19,6 +19,6 @@
 
 G_BEGIN_DECLS
 
-  void asynclib_invoke_in_context (GMainContext* main_context, void (*callback)(gpointer), gpointer callback_data, GDestroyNotify notify) noexcept;
+  G_GNUC_INTERNAL void _asynclib_invoke_in_context (GMainContext* main_context, void (*callback)(gpointer), gpointer callback_data, GDestroyNotify notify) noexcept;
 
 G_END_DECLS

@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include <config.h>
-#include <asynclib/invoker.h>
-#include <asynclib/slice.h>
+#include <asynclib/impl/invoker.h>
+#include <asynclib/impl/slice.h>
 
 struct __invoker_callback
 {
@@ -141,7 +141,7 @@ static void remove_invoker (GMainContext* main_context) noexcept
   g_rw_lock_writer_unlock (&invoker_table_lock);
 }
 
-void asynclib_invoke_in_context (GMainContext* main_context, void (*func)(gpointer), gpointer user_data, GDestroyNotify notify) noexcept
+void _asynclib_invoke_in_context (GMainContext* main_context, void (*func)(gpointer), gpointer user_data, GDestroyNotify notify) noexcept
 {
 
   auto invoker = find_invoker (main_context);
