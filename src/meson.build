@@ -14,3 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
+
+gio_dep = dependency ('gio-2.0',required: true)
+
+__futures_src = [ 'main.cc' ]
+
+executable ('futures',
+  c_args: [ '-DG_LOG_DOMAIN="Futures"', '-DG_LOG_USE_STRUCTURED=1',
+            '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
+            '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
+  cpp_args: [ '-DG_LOG_DOMAIN="Futures"', '-DG_LOG_USE_STRUCTURED=1',
+              '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
+              '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
+  dependencies: [ config_dep, gio_dep ],
+  sources: __futures_src)
