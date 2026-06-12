@@ -15,21 +15,28 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-src_inc = include_directories ('.')
-config_dep = declare_dependency (dependencies: config_dep, include_directories: src_inc)
+__asynclib_src = [ 'asynclib.h' ]
 
-gio_dep = dependency ('gio-2.0',required: true)
+foreach bit: [ 'future' ] 
 
-subdir ('asynclib')
+  __asynclib_src += [ '@0@.cc'.format (bit) ]
+  __asynclib_src += [ '@0@.h'.format (bit) ]
+endforeach
 
-__futures_src = [ 'main.cc' ]
+foreach bit: [ 'co', 'op' ] 
 
-executable ('futures',
-  c_args: [ '-DG_LOG_DOMAIN="Futures"', '-DG_LOG_USE_STRUCTURED=1',
+  __asynclib_src += [ 'future_@0@.h'.format (bit) ]
+endforeach
+
+__asynclib_lib = library ('asynclib',
+  c_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
             '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
             '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  cpp_args: [ '-DG_LOG_DOMAIN="Futures"', '-DG_LOG_USE_STRUCTURED=1',
+  cpp_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
               '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
               '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  dependencies: [ config_dep, gio_dep, __asynclib_dep ],
-  sources: __futures_src)
+  dependencies: [ config_dep, gio_dep ],
+  sources: __asynclib_src)
+
+__asynclib_dep = declare_dependency (dependencies: [ config_dep, gio_dep ],
+  link_with: __asynclib_lib)
