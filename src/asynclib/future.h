@@ -60,13 +60,13 @@ namespace asynclib
       typedef void *mptr;
     public:
 
-      virtual ~__future_host () { }
+      virtual ~__future_host () noexcept { }
       virtual void launch (__future_host_checker* checker) noexcept = 0;
     };
 
   struct details::__future_host_checker
     {
-      virtual ~__future_host_checker () { }
+      virtual ~__future_host_checker () noexcept { }
       virtual bool check () const noexcept = 0;
       virtual void dispatch () noexcept = 0;
     };

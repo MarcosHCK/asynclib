@@ -47,12 +47,6 @@ int main (int argc, char* argv[])
   GMainContext* main_context = g_main_context_ref_thread_default ();
   GMainLoop* main_loop = g_main_loop_new (main_context, FALSE);
 
-  std::promise<int> promise1;
-  std::future<int> future1 = promise1.get_future ();
-
-  future1 >> [](std::future<int>& future) noexcept -> void
-    { g_print ("future fulfilled (value = %i)\n", future.get ()); };
-
   int value = g_random_int ();
 
   g_print ("generated (value = %i)\n", value);

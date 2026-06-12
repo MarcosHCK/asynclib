@@ -15,9 +15,9 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-__asynclib_src = [ 'asynclib.h' ]
+__asynclib_src = [ 'asynclib.h', 'slice.h' ]
 
-foreach bit: [ 'future' ] 
+foreach bit: [ 'future', 'invoker' ] 
 
   __asynclib_src += [ '@0@.cc'.format (bit) ]
   __asynclib_src += [ '@0@.h'.format (bit) ]
