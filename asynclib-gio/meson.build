@@ -1,12 +1,12 @@
 # Copyright (C) 2025-2026 MarcosHCK
-# This file is part of futures.
+# This file is part of asynclib.
 #
-# futures is free software: you can redistribute it and/or modify
+# asynclib is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# futures is distributed in the hope that it will be useful,
+# asynclib is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -34,4 +34,9 @@ __asynclib_gio_dep = declare_dependency (dependencies: [ gio_dep, __asynclib_dep
 
 meson.override_dependency ('asynclib-gio', __asynclib_gio_dep)
 
-install_headers (__asynclib_gio_headers, subdir: 'asynclib-gio')
+import ('pkgconfig').generate (__asynclib_gio_lib,
+  libraries: [ __asynclib_dep ],
+  subdirs: '@0@-gio'.format (meson.project_name ()),
+  version: meson.project_version ())
+
+install_headers (__asynclib_gio_headers, subdir: '@0@-gio'.format (meson.project_name ()))

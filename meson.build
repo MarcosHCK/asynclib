@@ -1,12 +1,12 @@
 # Copyright (C) 2025-2026 MarcosHCK
-# This file is part of futures.
+# This file is part of asynclib.
 #
-# futures is free software: you can redistribute it and/or modify
+# asynclib is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# futures is distributed in the hope that it will be useful,
+# asynclib is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -21,7 +21,8 @@ project \
     license: 'GPL-3.0-or-later',
     license_files: [ 'COPYING' ],
     meson_version: '>= 1.10.0',
-    version: 'v0.0.0-devel')
+
+    version: run_command ('version.py', 'get-version', check: true).stdout ().strip ())
 
 cc = meson.get_compiler ('c')
 cpp = meson.get_compiler ('cpp')
@@ -136,11 +137,16 @@ summary ({
     'host system': host_machine.system (),
   }, section: 'Build environment')
 
+summary ({
+    'prefix': get_option ('prefix'),
+    'libdir': get_option ('prefix') / get_option('libdir'),
+  }, section: 'Installation')
+
 if build_machine.system () != host_machine.system ()
 
   summary ({
-      'build cpu' : build_machine.cpu_family (),
-      'build endian' : build_machine.endian (),
-      'build system' : build_machine.system (),
+      'build cpu': build_machine.cpu_family (),
+      'build endian': build_machine.endian (),
+      'build system': build_machine.system (),
     }, section: 'Build environment')
 endif
