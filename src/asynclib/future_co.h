@@ -26,11 +26,11 @@ namespace asynclib
   namespace details
     {
 
-      template<Future _Future> struct __future_awaitable_base;
+      template<typename Awaitable> struct __future_awaitable_base;
       template<typename Result> struct __future_coroutine_base;
     }
 
-  template<details::Future _Future> struct details::__future_awaitable_base
+  template<details::Future _Future> struct details::__future_awaitable_base<_Future>
     {
 
       typedef _Future future_type;
@@ -102,7 +102,7 @@ namespace std
       struct promise_type: public asynclib::details::__future_coroutine_base<T>
         {
 
-          template<std::same_as<T> U = T>
+          template<std::convertible_to<T> U = T>
           void return_value (U&& value)
             { this->_promise.set_value (std::forward<U> (value)); }
         };

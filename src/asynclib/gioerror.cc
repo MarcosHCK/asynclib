@@ -27,8 +27,22 @@ gio_error::~gio_error () noexcept
 }
 
 gio_error::gio_error (const gio_error& o) noexcept (std::is_nothrow_copy_constructible_v<_parent>):
-                                                     _parent (o), _g_error (g_error_copy ((GError*) o._g_error))
+                                         _parent (o), _g_error (g_error_copy ((GError*) o._g_error))
+{ }
+
+gio_error::gio_error (unsigned domain, int code, const char* message) noexcept (std::is_nothrow_constructible_v<_parent>):
+                                                                     _parent (), _g_error (g_error_new_literal (domain, code, message))
+{ }
+
+gio_error::gio_error (unsigned domain, int code, const char* format, ...) noexcept (std::is_nothrow_constructible_v<_parent>):
+                                                                         _parent ()
 {
+
+  va_list l;
+  va_start (l, format);
+
+  _g_error = g_error_new_valist (domain, code, format, l);
+  va_end (l);
 }
 
 const char* gio_error::what () const _GLIBCXX_TXN_SAFE_DYN noexcept

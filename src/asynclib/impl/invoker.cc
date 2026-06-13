@@ -77,7 +77,7 @@ static GSourceFuncs source_funcs =
   .closure_marshal = NULL,
 };
 
-GRWLock invoker_table_lock;
+static GRWLock invoker_table_lock;
 
 static GHashTable* get_invoker_table () noexcept
 {

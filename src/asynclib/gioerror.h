@@ -16,6 +16,10 @@
  */
 #pragma once
 #include <exception>
+#define __GLIB_H_INSIDE__
+#include <glib/gmacros.h>
+
+struct _GError;
 
 namespace asynclib
 {
@@ -30,14 +34,19 @@ namespace asynclib
       ~gio_error () noexcept;
 
       inline gio_error (gio_error&& o) noexcept (std::is_nothrow_move_constructible_v<_parent>):
-                                              _parent (std::move (o)), _g_error (o._g_error)
+                                      _parent (std::move (o)), _g_error (o._g_error)
         { o._g_error = nullptr; }
 
       gio_error (const gio_error&) noexcept (std::is_nothrow_copy_constructible_v<_parent>);
 
       inline gio_error (void* g_error) noexcept (std::is_nothrow_constructible_v<_parent>):
-                                          _parent (), _g_error (g_error)
+                                      _parent (), _g_error (g_error)
         { }
+
+      gio_error (unsigned domain, int code, const char* message) noexcept (std::is_nothrow_constructible_v<_parent>);
+      gio_error (unsigned domain, int code, const char* format, ...) noexcept (std::is_nothrow_constructible_v<_parent>) G_GNUC_PRINTF (4, 5);
+
+      constexpr const struct _GError* get_g_error () const noexcept { return (_GError*) _g_error; }
 
       virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override;
     };
