@@ -14,8 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#pragma once
-#include <asynclib/future.h>
-#include <asynclib/future_co.h>
-#include <asynclib/future_op.h>
-#include <asynclib/task.h>
+#include <config.h>
+#include <asynclib/gioexception.h>
+#include <glib.h>
+
+asynclib::gio_exception::~gio_exception () noexcept
+{
+  g_error_free ((GError*) _g_error);
+}
+
+const char* asynclib::gio_exception::what () const _GLIBCXX_TXN_SAFE_DYN noexcept
+{
+  return ((GError*) _g_error)->message;
+}

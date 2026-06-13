@@ -15,11 +15,13 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
+gio_dep = dependency ('gio-2.0',required: true)
+
 __asynclib_src = [ 'asynclib.h' ]
 
 subdir ('impl')
 
-foreach bit: [ 'future' ] 
+foreach bit: [ 'future', 'gioexception', 'task' ]
 
   __asynclib_src += [ '@0@.cc'.format (bit) ]
   __asynclib_src += [ '@0@.h'.format (bit) ]
@@ -30,6 +32,11 @@ foreach bit: [ 'co', 'op' ]
   __asynclib_src += [ 'future_@0@.h'.format (bit) ]
 endforeach
 
+foreach bit: [ 'activate', 'complete' ] 
+
+  __asynclib_src += [ 'task@0@.h'.format (bit) ]
+endforeach
+
 __asynclib_lib = library ('asynclib',
   c_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
             '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
@@ -37,8 +44,8 @@ __asynclib_lib = library ('asynclib',
   cpp_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
               '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
               '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  dependencies: [ config_dep, __asynclib_impl_dep ],
+  dependencies: [ config_dep, gio_dep, __asynclib_impl_dep ],
   sources: __asynclib_src)
 
-__asynclib_dep = declare_dependency (dependencies: [ config_dep ],
+__asynclib_dep = declare_dependency (dependencies: [ config_dep, gio_dep ],
   link_with: __asynclib_lib)

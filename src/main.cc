@@ -32,13 +32,45 @@ static inline std::future<void> delay (guint interval) noexcept
 return promise->get_future ();
 }
 
+static void delay_task (GTask* task, void* source_object, void* task_data, GCancellable* cancellable)
+{
+
+  g_usleep ((gulong) (((double) G_USEC_PER_SEC / (double) 1000) * (double) GPOINTER_TO_UINT (task_data)));
+  g_task_return_boolean (task, TRUE);
+}
+
+static inline void delay_async (guint interval, GAsyncReadyCallback callback, gpointer user_data)
+{
+
+  auto task = g_task_new (NULL, NULL, callback, user_data);
+
+  g_task_set_task_data (task, GUINT_TO_POINTER (interval), NULL);
+  g_task_run_in_thread (task, delay_task);
+}
+
+static inline void delay_finish (GAsyncResult* result, GError** user_data)
+{
+
+  g_task_propagate_boolean ((GTask*) result, user_data);
+}
+
 template<typename T>
-static inline std::future<int> delayed (T&& _value, guint interval) noexcept
+static inline std::future<int> delayed_native (T&& _value, guint interval) noexcept
 {
 
   T value = std::forward<T> (_value);
 
 co_return (co_await delay (interval), value);
+}
+
+template<typename T>
+static inline std::future<int> delayed_task (T&& _value, guint interval) noexcept
+{
+
+  asynclib::details::__task_function<delay_async, delay_finish> delay_task;
+  T value = std::forward<T> (_value);
+
+co_return (co_await delay_task (interval), value);
 }
 
 int main (int argc, char* argv[])
@@ -51,8 +83,11 @@ int main (int argc, char* argv[])
 
   g_print ("generated (value = %i)\n", value);
 
-  delayed (value, 2000) >> [](std::future<int>& future) noexcept -> void
-    { g_print ("future fulfilled (value = %i)\n", future.get ()); };
+  delayed_native (value, 2000) >> [](std::future<int>& future) noexcept -> void
+    { g_print ("delayed_native future fulfilled (value = %i)\n", future.get ()); };
+
+  delayed_task (value, 2000) >> [](std::future<int>& future) noexcept -> void
+    { g_print ("delayed_task future fulfilled (value = %i)\n", future.get ()); };
 
   g_print ("running loop\n");
   g_main_loop_run (main_loop);

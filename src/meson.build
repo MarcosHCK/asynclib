@@ -18,8 +18,6 @@
 src_inc = include_directories ('.')
 config_dep = declare_dependency (dependencies: config_dep, include_directories: src_inc)
 
-gio_dep = dependency ('gio-2.0',required: true)
-
 subdir ('asynclib')
 
 __futures_src = [ 'main.cc' ]
@@ -31,5 +29,5 @@ executable ('futures',
   cpp_args: [ '-DG_LOG_DOMAIN="Futures"', '-DG_LOG_USE_STRUCTURED=1',
               '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
               '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  dependencies: [ config_dep, gio_dep, __asynclib_dep ],
+  dependencies: [ config_dep, __asynclib_dep ],
   sources: __futures_src)

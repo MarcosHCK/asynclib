@@ -15,7 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <asynclib/future.h>
-#include <asynclib/future_co.h>
-#include <asynclib/future_op.h>
-#include <asynclib/task.h>
+#include <exception>
+
+namespace asynclib
+{
+
+  class gio_exception: std::exception
+    {
+
+      void* _g_error = nullptr;
+      using _parent = std::exception;
+    public:
+
+      ~gio_exception () noexcept;
+
+      inline gio_exception (void* g_error) noexcept (std::is_nothrow_constructible_v<_parent>):
+                                           _parent (), _g_error (g_error)
+        { }
+
+      virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override;
+    };
+}

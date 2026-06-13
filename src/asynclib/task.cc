@@ -14,8 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#pragma once
-#include <asynclib/future.h>
-#include <asynclib/future_co.h>
-#include <asynclib/future_op.h>
+#include <config.h>
 #include <asynclib/task.h>
+#include <gio/gio.h>
+using namespace asynclib::details;
