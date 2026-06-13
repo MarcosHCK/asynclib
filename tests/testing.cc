@@ -14,7 +14,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#pragma once
-#include <asynclib/asynclib.h>
-#include <asynclib-gio/gioerror.h>
-#include <asynclib-gio/task.h>
+#include <config.h>
+#include <new>
+#include <tests/testing.h>
+
+static void destroy_func (gpointer mptr)
+{
+
+  ((std::move_only_function<void ()>*) mptr)->~move_only_function ();
+  g_slice_free1 (sizeof (std::move_only_function<void ()>), mptr);
+}
+
+static void test_func (gconstpointer mptr)
+{
+
+  (* ((std::move_only_function<void ()>*) mptr)) ();
+}
+
+void testing::g_test_add_function (const char* path, std::move_only_function<void ()>&& func)
+{
+
+  auto mptr = g_slice_alloc0 (sizeof (std::move_only_function<void ()>));
+  auto data = new (mptr) std::move_only_function<void ()> (std::move (func));
+
+  g_test_add_data_func_full (path, data, test_func, destroy_func);
+}
