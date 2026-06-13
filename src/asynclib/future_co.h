@@ -17,6 +17,7 @@
 #pragma once
 #include <asynclib/future.h>
 #include <asynclib/future_op.h>
+#include <concepts>
 #include <coroutine>
 
 namespace asynclib
@@ -25,8 +26,8 @@ namespace asynclib
   namespace details
     {
 
-      template<Future _Future>
-      struct __future_awaitable_base;
+      template<Future _Future> struct __future_awaitable_base;
+      template<typename Result> struct __future_coroutine_base;
     }
 
   template<details::Future _Future> struct details::__future_awaitable_base
@@ -55,6 +56,41 @@ namespace asynclib
       static constexpr auto _timeout = std::future_status::timeout;
       static constexpr auto _zero = std::chrono::milliseconds::zero ();
     };
+
+  template<typename Result> struct details::__future_coroutine_base
+    {
+
+      std::suspend_always final_suspend () noexcept
+        { return { }; }
+
+      std::future<Result> get_return_object ()
+        { return _promise.get_future (); }
+
+      std::suspend_never initial_suspend ()
+        { return { }; }
+
+      void unhandled_exception ()
+        { _promise.set_exception (std::current_exception ()); }
+
+
+      std::suspend_always await_transform (std::suspend_always)
+        { return { }; }
+
+      template<Future _Future>
+      static inline __future_awaitable_base<_Future> await_transform (_Future&& future)
+        {
+          return __future_awaitable_base<_Future> (std::forward<_Future> (future));
+        }
+
+      template<Future _Future>
+      static inline __future_awaitable_base<std::shared_future<unwrap_future_t<_Future>>> await_transform (_Future& future)
+        {
+          return __future_awaitable_base<std::shared_future<unwrap_future_t<_Future>>> (future.share ());
+        }
+
+    protected:
+      std::promise<Result> _promise;
+    };
 }
 
 namespace std
@@ -62,43 +98,24 @@ namespace std
 
   template<typename T, typename... Args> struct coroutine_traits<std::future<T>, Args ...>
     {
-      struct promise_type;
+
+      struct promise_type: public asynclib::details::__future_coroutine_base<T>
+        {
+
+          template<std::same_as<T> U = T>
+          void return_value (U&& value)
+            { this->_promise.set_value (std::forward<U> (value)); }
+        };
     };
 
-  template<typename T, typename... Args> struct coroutine_traits<std::future<T>, Args ...>::promise_type
+  template<typename... Args> struct coroutine_traits<std::future<void>, Args ...>
     {
 
-      std::suspend_always final_suspend () noexcept
-        { return { }; }
-
-      std::future<T> get_return_object ()
-        { return _promise.get_future (); }
-
-      std::suspend_never initial_suspend ()
-        { return { }; }
-      
-      void return_value (T value)
-        { _promise.set_value (std::move (value)); }
-      
-      void unhandled_exception ()
-        { _promise.set_exception (std::current_exception ()); }
-
-      std::suspend_always await_transform (std::suspend_always)
-        { return { }; }
-
-      template<asynclib::details::Future _Future>
-      static inline asynclib::details::__future_awaitable_base<_Future> await_transform (_Future&& future)
+      struct promise_type: public asynclib::details::__future_coroutine_base<void>
         {
-          return asynclib::details::__future_awaitable_base<_Future> (std::forward<_Future> (future));
-        }
 
-      template<asynclib::details::Future _Future>
-      static inline asynclib::details::__future_awaitable_base<std::shared_future<asynclib::unwrap_future_t<_Future>>> await_transform (_Future& future)
-        {
-          return asynclib::details::__future_awaitable_base<std::shared_future<asynclib::unwrap_future_t<_Future>>> (future.share ());
-        }
-
-    private:
-      std::promise<T> _promise;
+          void return_void ()
+            { this->_promise.set_value (); }
+        };
     };
 }
