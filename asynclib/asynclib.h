@@ -16,17 +16,5 @@
  */
 #pragma once
 #include <asynclib/future.h>
-#include <asynclib/taskactivate.h>
-#include <asynclib/taskcomplete.h>
-#include <asynclib/taskfunction.h>
-
-namespace asynclib
-{
-
-  template<auto _Activate, auto _Complete>
-    requires (! details::__task_activate_function_details<std::remove_pointer_t<decltype (_Activate)>>::invalid
-           && ! details::__task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::invalid)
-  struct gio_task: public details::__task_function<_Activate, _Complete>
-    {
-    };
-}
+#include <asynclib/future_co.h>
+#include <asynclib/future_op.h>

@@ -16,10 +16,9 @@
  */
 #pragma once
 #include <asynclib/future.h>
-#include <asynclib/taskactivate.h>
-#include <asynclib/taskcomplete.h>
+#include <asynclib-gio/taskactivate.h>
+#include <asynclib-gio/taskcomplete.h>
 #include <gio/gio.h>
-#include <type_traits>
 
 namespace asynclib::details
 {

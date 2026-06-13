@@ -16,8 +16,8 @@
  */
 #pragma once
 #include <asynclib/future.h>
-#include <asynclib/gioerror.h>
 #include <asynclib/impl/slice.h>
+#include <asynclib-gio/gioerror.h>
 #include <gio/gio.h>
 
 namespace asynclib::details

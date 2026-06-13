@@ -16,7 +16,7 @@
 #
 
 project \
-  ( 'futures', 'c', 'cpp',
+  ( 'asynclib', 'c', 'cpp',
     default_options: [ 'c_std=c23', 'cpp_std=c++26', 'warning_level=3' ],
     license: 'GPL-3.0-or-later',
     license_files: [ 'COPYING' ],
@@ -44,18 +44,12 @@ config.set_quoted ('PACKAGE_NAME', meson.project_name ())
 config.set_quoted ('PACKAGE_STRING', '@0@ @1@'.format (meson.project_name (), meson.project_version ()))
 config.set_quoted ('PACKAGE_TARNAME', meson.project_name ())
 # TODO: for now
-config.set_quoted ('PACKAGE_URL', 'https://github.com/MarcosHCK/futures')
+config.set_quoted ('PACKAGE_URL', 'https://github.com/MarcosHCK/asynclib')
 config.set_quoted ('PACKAGE_VERSION', git_version)
 config.set ('PACKAGE_VERSION_MAJOR', git_version_major)
 config.set ('PACKAGE_VERSION_MINOR', git_version_minor)
 config.set ('PACKAGE_VERSION_MICRO', git_version_micro)
 config.set_quoted ('PACKAGE_VERSION_STAGE', git_version_stage)
-
-prefix = get_option ('prefix')
-
-config.set_quoted ('DATA_DIR', prefix / get_option ('datadir') / 'wakit')
-config.set_quoted ('LIB_DIR', prefix / get_option ('libdir') / 'wakit')
-config.set_quoted ('LIBEXEC_DIR', prefix / get_option ('libexecdir') / 'wakit')
 
 config_dep = declare_dependency (sources: configure_file (output: 'config.h', configuration: config))
 config_dep = declare_dependency (dependencies: config_dep, include_directories: include_directories ('.'))
@@ -125,7 +119,8 @@ add_project_link_arguments (cpp.get_supported_link_arguments (warning_c_link_arg
 ########################
 
 # source tree
-subdir ('src')
+subdir ('asynclib')
+subdir ('asynclib-gio')
 
 ########################
 # Summaries            #

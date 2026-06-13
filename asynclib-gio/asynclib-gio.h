@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#include <config.h>
-#include <asynclib/task.h>
-#include <gio/gio.h>
-using namespace asynclib::details;
+#pragma once
+#include <asynclib-gio/gioerror.h>
+#include <asynclib-gio/task.h>

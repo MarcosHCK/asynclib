@@ -15,25 +15,23 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-glib_dep = dependency ('glib-2.0', required: true)
+gio_dep = dependency ('gio-2.0',required: true)
 
-__asynclib_impl_src = [ 'slice.h' ]
+__asynclib_gio_headers = [ 'gioerror.h', 'task.h', 'taskactivate.h', 'taskcomplete.h', 'taskfunction.h' ]
+__asynclib_gio_sources = [ 'gioerror.cc', 'task.cc' ]
 
-foreach bit: [ 'checksource', 'checkthread', 'invoker' ] 
-
-  __asynclib_impl_src += [ '@0@.cc'.format (bit) ]
-  __asynclib_impl_src += [ '@0@.h'.format (bit) ]
-endforeach
-
-__asynclib_impl_lib = static_library ('asynclib-impl',
-  c_args: [ '-DG_LOG_DOMAIN="Asynclib.Implementation"', '-DG_LOG_USE_STRUCTURED=1',
+__asynclib_gio_lib = library ('asynclib-gio',
+  c_args: [ '-DG_LOG_DOMAIN="Asynclib.GIO"', '-DG_LOG_USE_STRUCTURED=1',
             '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
             '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  cpp_args: [ '-DG_LOG_DOMAIN="Asynclib.Implementation"', '-DG_LOG_USE_STRUCTURED=1',
+  cpp_args: [ '-DG_LOG_DOMAIN="Asynclib.GIO"', '-DG_LOG_USE_STRUCTURED=1',
               '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
               '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  dependencies: [ config_dep, glib_dep ],
-  sources: __asynclib_impl_src)
+  dependencies: [ config_dep, gio_dep, __asynclib_dep ],
+  sources: [ __asynclib_gio_headers, __asynclib_gio_sources ])
 
-__asynclib_impl_dep = declare_dependency (dependencies: [ config_dep, gio_dep ],
-  link_with: __asynclib_impl_lib)
+__asynclib_gio_dep = declare_dependency (dependencies: [ gio_dep, __asynclib_dep ], link_with: __asynclib_gio_lib)
+
+meson.override_dependency ('asynclib-gio', __asynclib_gio_dep)
+
+install_headers (__asynclib_gio_headers, subdir: 'asynclib-gio')

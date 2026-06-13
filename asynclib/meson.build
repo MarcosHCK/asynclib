@@ -15,19 +15,23 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-src_inc = include_directories ('.')
-config_dep = declare_dependency (dependencies: config_dep, include_directories: src_inc)
+subdir ('impl')
 
-subdir ('asynclib')
+__asynclib_headers = [ 'asynclib.h', 'future.h', 'future_co.h', 'future_op.h' ]
+__asynclib_sources = [ 'future.cc' ]
 
-__futures_src = [ 'main.cc' ]
-
-executable ('futures',
-  c_args: [ '-DG_LOG_DOMAIN="Futures"', '-DG_LOG_USE_STRUCTURED=1',
+__asynclib_lib = library ('asynclib',
+  c_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
             '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
             '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  cpp_args: [ '-DG_LOG_DOMAIN="Futures"', '-DG_LOG_USE_STRUCTURED=1',
+  cpp_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
               '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
               '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  dependencies: [ config_dep, __asynclib_dep ],
-  sources: __futures_src)
+  dependencies: [ config_dep, __asynclib_impl_dep ],
+  sources: [ __asynclib_headers, __asynclib_sources ])
+
+__asynclib_dep = declare_dependency (link_with: __asynclib_lib)
+
+meson.override_dependency ('asynclib', __asynclib_dep)
+
+install_headers (__asynclib_headers, subdir: 'asynclib')
