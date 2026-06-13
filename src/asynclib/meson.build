@@ -32,7 +32,7 @@ foreach bit: [ 'co', 'op' ]
   __asynclib_src += [ 'future_@0@.h'.format (bit) ]
 endforeach
 
-foreach bit: [ 'activate', 'complete' ] 
+foreach bit: [ 'activate', 'complete', 'function' ] 
 
   __asynclib_src += [ 'task@0@.h'.format (bit) ]
 endforeach

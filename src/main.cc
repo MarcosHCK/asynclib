@@ -32,7 +32,7 @@ static inline std::future<void> delay (guint interval) noexcept
 return promise->get_future ();
 }
 
-static void delay_task (GTask* task, void* source_object, void* task_data, GCancellable* cancellable)
+static void delay_worker (GTask* task, void* source_object, void* task_data, GCancellable* cancellable)
 {
 
   g_usleep ((gulong) (((double) G_USEC_PER_SEC / (double) 1000) * (double) GPOINTER_TO_UINT (task_data)));
@@ -45,7 +45,7 @@ static inline void delay_async (guint interval, GAsyncReadyCallback callback, gp
   auto task = g_task_new (NULL, NULL, callback, user_data);
 
   g_task_set_task_data (task, GUINT_TO_POINTER (interval), NULL);
-  g_task_run_in_thread (task, delay_task);
+  g_task_run_in_thread (task, delay_worker);
 }
 
 static inline void delay_finish (GAsyncResult* result, GError** user_data)
@@ -53,6 +53,8 @@ static inline void delay_finish (GAsyncResult* result, GError** user_data)
 
   g_task_propagate_boolean ((GTask*) result, user_data);
 }
+
+asynclib::gio_task<delay_async, delay_finish> delay_task;
 
 template<typename T>
 static inline std::future<int> delayed_native (T&& _value, guint interval) noexcept
@@ -67,7 +69,6 @@ template<typename T>
 static inline std::future<int> delayed_task (T&& _value, guint interval) noexcept
 {
 
-  asynclib::details::__task_function<delay_async, delay_finish> delay_task;
   T value = std::forward<T> (_value);
 
 co_return (co_await delay_task (interval), value);
