@@ -20,17 +20,23 @@
 namespace asynclib
 {
 
-  class gio_exception: std::exception
+  class gio_error: public std::exception
     {
 
       void* _g_error = nullptr;
       using _parent = std::exception;
     public:
 
-      ~gio_exception () noexcept;
+      ~gio_error () noexcept;
 
-      inline gio_exception (void* g_error) noexcept (std::is_nothrow_constructible_v<_parent>):
-                                           _parent (), _g_error (g_error)
+      inline gio_error (gio_error&& o) noexcept (std::is_nothrow_move_constructible_v<_parent>):
+                                              _parent (std::move (o)), _g_error (o._g_error)
+        { o._g_error = nullptr; }
+
+      gio_error (const gio_error&) noexcept (std::is_nothrow_copy_constructible_v<_parent>);
+
+      inline gio_error (void* g_error) noexcept (std::is_nothrow_constructible_v<_parent>):
+                                          _parent (), _g_error (g_error)
         { }
 
       virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override;

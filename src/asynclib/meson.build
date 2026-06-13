@@ -21,7 +21,7 @@ __asynclib_src = [ 'asynclib.h' ]
 
 subdir ('impl')
 
-foreach bit: [ 'future', 'gioexception', 'task' ]
+foreach bit: [ 'future', 'gioerror', 'task' ]
 
   __asynclib_src += [ '@0@.cc'.format (bit) ]
   __asynclib_src += [ '@0@.h'.format (bit) ]

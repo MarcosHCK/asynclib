@@ -15,15 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include <config.h>
-#include <asynclib/gioexception.h>
+#include <asynclib/gioerror.h>
 #include <glib.h>
+using namespace asynclib;
 
-asynclib::gio_exception::~gio_exception () noexcept
+gio_error::~gio_error () noexcept
 {
-  g_error_free ((GError*) _g_error);
+
+  if (nullptr != _g_error)
+    _g_error = (g_error_free ((GError*) _g_error), nullptr);
 }
 
-const char* asynclib::gio_exception::what () const _GLIBCXX_TXN_SAFE_DYN noexcept
+gio_error::gio_error (const gio_error& o) noexcept (std::is_nothrow_copy_constructible_v<_parent>):
+                                                     _parent (o), _g_error (g_error_copy ((GError*) o._g_error))
+{
+}
+
+const char* gio_error::what () const _GLIBCXX_TXN_SAFE_DYN noexcept
 {
   return ((GError*) _g_error)->message;
 }

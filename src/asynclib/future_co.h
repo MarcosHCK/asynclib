@@ -18,7 +18,6 @@
 #include <asynclib/future.h>
 #include <asynclib/future_op.h>
 #include <coroutine>
-#include <type_traits>
 
 namespace asynclib
 {
@@ -53,8 +52,6 @@ namespace asynclib
     private:
 
       future_type _future;
-
-      static_assert(std::is_base_of_v<std::__future_base, _Future>);
       static constexpr auto _timeout = std::future_status::timeout;
       static constexpr auto _zero = std::chrono::milliseconds::zero ();
     };

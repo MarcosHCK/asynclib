@@ -16,7 +16,7 @@
  */
 #pragma once
 #include <asynclib/future.h>
-#include <asynclib/gioexception.h>
+#include <asynclib/gioerror.h>
 #include <asynclib/impl/slice.h>
 #include <gio/gio.h>
 
@@ -59,7 +59,7 @@ namespace asynclib::details
 
             promise->set_value (std::move (result));
           else
-            promise->set_exception (std::make_exception_ptr (gio_exception (error)));
+            promise->set_exception (std::make_exception_ptr (gio_error (error)));
 
         return g_slice_free_<promise_type> (promise);
         }
@@ -79,7 +79,7 @@ namespace asynclib::details
 
             promise->set_value ();
           else
-            promise->set_exception (std::make_exception_ptr (gio_exception (error)));
+            promise->set_exception (std::make_exception_ptr (gio_error (error)));
 
         return g_slice_free_<promise_type> (promise);
         }

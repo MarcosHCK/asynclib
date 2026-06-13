@@ -16,7 +16,6 @@
  */
 #pragma once
 #include <asynclib/future.h>
-#include <asynclib/gioexception.h>
 #include <asynclib/impl/slice.h>
 #include <gio/gio.h>
 #include <tuple>
