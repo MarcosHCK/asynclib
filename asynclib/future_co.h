@@ -19,6 +19,7 @@
 #include <asynclib/future_op.h>
 #include <concepts>
 #include <coroutine>
+#include <type_traits>
 
 namespace asynclib
 {
@@ -28,7 +29,35 @@ namespace asynclib
 
       template<typename Awaitable> struct __future_awaitable_base;
       template<typename Result> struct __future_coroutine_base;
+      template<Future _Future> struct __future_link_coroutine;
     }
+
+  template<details::Future _Future> struct details::__future_link_coroutine: public __future_link_base<_Future>
+    {
+
+      typedef __future_link_base<_Future> _parent;
+      typedef __future_link_base<_Future>::future_type future_type;
+
+      static inline void create (std::coroutine_handle<> handle, future_type&& future) noexcept
+        {
+
+          auto impl = new __future_link_coroutine (handle, std::forward<_Future> (future));
+          __future_host_impl->launch (impl);
+        }
+
+      virtual void dispatch () noexcept override
+        {
+          _handle.resume ();
+        }
+
+    private:
+
+      std::coroutine_handle<> _handle;
+
+      inline __future_link_coroutine (std::coroutine_handle<> handle, future_type&& future) noexcept:
+          _parent (std::forward<_Future> (future)), _handle (handle)
+        { }
+    };
 
   template<details::Future _Future> struct details::__future_awaitable_base<_Future>
     {
@@ -43,7 +72,10 @@ namespace asynclib
         { return std::move (_future).get (); }
 
       void await_suspend (std::coroutine_handle<> handle)
-        { _future >> [handle = std::move (handle)] (_Future&) noexcept { handle.resume (); }; }
+        {
+          using T = std::remove_cvref_t<_Future>;
+          details::__future_link_coroutine<T&>::create (handle, _future);
+        }
 
       __future_awaitable_base (const __future_awaitable_base&) = delete;
 

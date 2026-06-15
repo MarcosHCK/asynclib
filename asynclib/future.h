@@ -81,7 +81,6 @@ namespace asynclib
 
       typedef _Future future_type;
       typedef unwrap_future_t<_Future> value_type;
-      static_assert (std::is_base_of_v<std::__future_base, std::remove_reference_t<_Future>>);
 
       future_type _future;
 

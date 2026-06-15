@@ -31,6 +31,12 @@ static std::future<int> xor2 (int value)
 co_return t ^ 2;
 }
 
+static std::future<int> xor2r (int value)
+{
+  auto f = xor1 (value);
+co_return (co_await f) ^ 2;
+}
+
 int main (int argc, char* argv[])
 {
 
@@ -45,6 +51,23 @@ int main (int argc, char* argv[])
       guint ready = 0;
 
       xor2 (n)
+        >> [&](std::future<int>& future) noexcept { r = future.get (); g_atomic_int_set (&ready, 1); };;
+
+      for (auto context = g_main_context_get_thread_default (); 0 == g_atomic_int_get (&ready); )
+        g_main_context_iteration (context, FALSE);
+
+      g_assert_cmpuint (3, ==, n ^ r);
+    });
+
+  g_test_add_ (TESTPATHROOT "/works/lvalue", []
+    {
+
+      auto n = (int) g_test_rand_int ();
+      auto r = n;
+
+      guint ready = 0;
+
+      xor2r (n)
         >> [&](std::future<int>& future) noexcept { r = future.get (); g_atomic_int_set (&ready, 1); };;
 
       for (auto context = g_main_context_get_thread_default (); 0 == g_atomic_int_get (&ready); )
