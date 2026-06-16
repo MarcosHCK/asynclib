@@ -17,7 +17,7 @@
 
 gio_dep = dependency ('gio-2.0',required: true)
 
-__asynclib_gio_headers = [ 'gioerror.h', 'task.h', 'taskactivate.h', 'taskcomplete.h', 'taskfunction.h' ]
+__asynclib_gio_headers = [ 'gioerror.h', 'slice.h', 'task.h', 'taskactivate.h', 'taskcomplete.h', 'taskfunction.h' ]
 __asynclib_gio_sources = [ 'gioerror.cc', 'task.cc' ]
 
 __asynclib_gio_lib = library ('asynclib-gio',

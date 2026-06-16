@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include <config.h>
-#include <asynclib/impl/slice.h>
 #include <asynclib-gio/asynclib-gio.h>
 #include <tests/asynclib-gio/server.h>
 #include <tests/testing.h>

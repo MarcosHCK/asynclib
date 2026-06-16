@@ -15,33 +15,71 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include <config.h>
-#include <asynclib/impl/checkthread.h>
 #include <asynclib/future.h>
 #include <asynclib/future_co.h>
 #include <asynclib/future_op.h>
+#include <glib.h>
 
 class __future_host_impl: public asynclib::details::__future_host
 {
 
   using __future_host_checker = asynclib::details::__future_host_checker;
   using __parent = asynclib::details::__future_host;
-  asynclib::details::__check_thread _check_thread;
 public:
-
-  inline __future_host_impl () noexcept:
-    _check_thread (asynclib::details::__check_thread ()) { }
-
   virtual void launch (__future_host_checker* checker) noexcept override;
 };
 
 __future_host_impl __p_future_host_impl;
 asynclib::details::__future_host* asynclib::details::__future_host_impl = &__p_future_host_impl;
 
+struct __task_source
+{
+
+  GSource parent;
+  asynclib::details::__future_host_checker* checker;
+};
+
+using __future_host_checker = asynclib::details::__future_host_checker;
+
+static GSourceFuncs source_funcs =
+{
+
+  .prepare = [](GSource* source, gint* out_timeout) noexcept -> gboolean
+    {
+      *out_timeout = 0;
+      return FALSE;
+    },
+
+  .check = [](GSource* source) noexcept -> gboolean
+    { return ((__task_source*) source)->checker->check () ? TRUE : FALSE; },
+
+  .dispatch = [](GSource* source, GSourceFunc callback, gpointer user_data) noexcept -> gboolean
+    {
+
+      auto checker = ((__task_source*) source)->checker;
+    return (checker->dispatch (), G_SOURCE_REMOVE);
+    },
+
+  .finalize = [](GSource* source) noexcept -> void
+    {
+
+      auto checker = ((__task_source*) source)->checker;
+    return __future_host_checker::destroy (checker);
+    },
+
+  .closure_callback = NULL,
+  .closure_marshal = NULL,
+};
+
 void __future_host_impl::launch (__future_host_checker* checker) noexcept
 {
 
-  GMainContext* main_context;
+  auto source = g_source_new (&source_funcs, sizeof (__task_source));
 
-  _check_thread.push (main_context = g_main_context_ref_thread_default (), checker);
-  g_main_context_unref (main_context);
+  g_source_set_priority (source, G_PRIORITY_LOW);
+  g_source_set_static_name (source, "[asynclib::__task_source]");
+  ((__task_source*) source)->checker = checker;
+
+  g_source_attach (source, g_main_context_get_thread_default ());
+  g_source_unref (source);
 }
