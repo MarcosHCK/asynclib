@@ -27,11 +27,18 @@ namespace asynclib
   class gio_error: public std::exception
     {
 
-      void* _g_error = nullptr;
+      struct _GError* _g_error = nullptr;
       using _parent = std::exception;
+
+      void unlink () noexcept;
     public:
 
-      ~gio_error () noexcept;
+      inline ~gio_error () noexcept
+        { unlink (); }
+
+      inline gio_error () noexcept (std::is_nothrow_constructible_v<_parent>):
+                          gio_error (nullptr)
+        { }
 
       inline gio_error (gio_error&& o) noexcept (std::is_nothrow_move_constructible_v<_parent>):
                                       _parent (std::move (o)), _g_error (o._g_error)
@@ -39,15 +46,29 @@ namespace asynclib
 
       gio_error (const gio_error&) noexcept (std::is_nothrow_copy_constructible_v<_parent>);
 
-      inline gio_error (void* g_error) noexcept (std::is_nothrow_constructible_v<_parent>):
-                                      _parent (), _g_error (g_error)
+      inline gio_error (struct _GError* g_error) noexcept (std::is_nothrow_constructible_v<_parent>):
+                                                _parent (), _g_error (g_error)
         { }
 
-      gio_error (unsigned domain, int code, const char* message) noexcept (std::is_nothrow_constructible_v<_parent>);
-      gio_error (unsigned domain, int code, const char* format, ...) noexcept (std::is_nothrow_constructible_v<_parent>) G_GNUC_PRINTF (4, 5);
+      constexpr const struct _GError* get_g_error () const noexcept { return _g_error; }
 
-      constexpr const struct _GError* get_g_error () const noexcept { return (_GError*) _g_error; }
+      static gio_error literal (unsigned domain, int code, const char* message)
+        noexcept (std::is_nothrow_constructible_v<gio_error, struct _GError*>);
+
+      static gio_error printf (unsigned domain, int code, const char* format, ...)
+        noexcept (std::is_nothrow_constructible_v<gio_error, struct _GError*>) G_GNUC_PRINTF (3, 4);
 
       virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override;
+
+      inline gio_error& operator= (gio_error&& o) noexcept
+        {
+          unlink ();
+          return (std::swap (_g_error, o._g_error), *this);
+        }
+
+      gio_error& operator= (const gio_error& o) noexcept;
+
+      inline bool operator== (std::nullptr_t) const noexcept
+        { return nullptr == _g_error; }
     };
 }

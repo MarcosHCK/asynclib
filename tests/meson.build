@@ -18,20 +18,22 @@
 basepath = meson.current_source_dir ()
 testpathroot = '/org/hck/asynclib'
 
-glib_dep = dependency ('glib-2.0', required: true)
+gio_dep = dependency ('gio-2.0', required: true)
 
 __testing_lib = static_library ('testing',
   c_args: [ '-DG_LOG_DOMAIN="Testing"', '-DG_LOG_USE_STRUCTURED=1',
             '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
-            '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
+            '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()),
+            '-DTESTPATHROOT="@0@"'.format (testpathroot) ],
   cpp_args: [ '-DG_LOG_DOMAIN="Testing"', '-DG_LOG_USE_STRUCTURED=1',
               '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
-              '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
+              '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()),
+              '-DTESTPATHROOT="@0@"'.format (testpathroot) ],
   build_by_default: false,
-  dependencies: [ config_dep, glib_dep ],
+  dependencies: [ config_dep, gio_dep ],
   sources: [ 'testing.cc', 'testing.h' ])
 
-__testing_dep = declare_dependency (dependencies: [ config_dep, glib_dep ],
+__testing_dep = declare_dependency (dependencies: [ config_dep, gio_dep ],
   link_with: __testing_lib)
 
 foreach bit: [ 'asynclib', 'asynclib-gio' ]

@@ -19,7 +19,22 @@ c_args = [ '-DG_LOG_DOMAIN="Asynclib.GIO.Tests"', '-DG_LOG_USE_STRUCTURED=1',
            '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
            '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()), ]
 
+python3 = import ('python').find_installation ('python3')
 testpath = meson.current_source_dir ().replace (basepath + '/', '')
+
+test ((testpath + '/times').replace ('/', '.'),
+      executable ('times',
+            c_args: c_args +
+                    [ '-DPYTHONEXE="@0@"'.format (python3.full_path ()),
+                      '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'times') ],
+            cpp_args: c_args +
+                      [ '-DPYTHONEXE="@0@"'.format (python3.full_path ()),
+                        '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'times') ],
+            build_by_default: false,
+            dependencies: [ config_dep, __asynclib_gio_dep, __testing_dep ],
+            sources: [ 'times.cc', 'server.cc', 'server.h' ]),
+      env: [ 'G_TEST_BUILDDIR=@0@'.format (meson.current_build_dir ()),
+             'G_TEST_SRCDIR=@0@'.format (meson.current_source_dir ()) ], )
 
 test ((testpath + '/tmpfile').replace ('/', '.'),
       executable ('tmpfile',
