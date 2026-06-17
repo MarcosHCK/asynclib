@@ -15,41 +15,64 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <functional>
+#include <chrono>
 #include <future>
 
 namespace asynclib
 {
 
-  template<typename T>
-    struct unwrap_future { };
-
-  template<typename T>
-    struct unwrap_future<T&> { using type = unwrap_future<T>::type; };
-
-  template<typename T>
-    struct unwrap_future<T&&> { using type = unwrap_future<T>::type; };
-
-  template<typename T>
-    struct unwrap_future<std::future<T>> { using type = T; };
-
-  template<typename T>
-    struct unwrap_future<std::shared_future<T>> { using type = T; };
-
-  template<typename T>
-    using unwrap_future_t = unwrap_future<T>::type;
-
   namespace details
     {
 
-      template<typename _Future>
-      concept Future = std::is_base_of_v<std::__future_base, std::remove_reference_t<_Future>>;
+      struct __future_unbound_tag;
+
+      template<typename _Future,
+               typename _Value = __future_unbound_tag>
+      concept __future = requires (_Future f, std::chrono::milliseconds d)
+        {
+
+          { f.get () };
+          { f.wait_for (d) } -> std::same_as<std::future_status>;
+          requires std::movable<_Future>;
+
+          requires std::same_as<_Value, __future_unbound_tag> || requires ()
+            {
+              { f.get () } -> std::same_as<_Value>;
+            };
+        };
+
+      template<typename _Promise,
+               typename _Value = void>
+      concept __promise = requires (_Promise p, std::exception_ptr e)
+        {
+
+          { p.get_future () } -> __future;
+          { p.set_exception (e) } -> std::same_as<void>;
+          requires std::movable<_Promise>;
+
+          requires (std::is_same_v<_Value, void> && requires ()
+            {
+              { p.set_value () } -> std::same_as<void>;
+            }) || requires (_Value v)
+            {
+              { p.set_value (v) } -> std::same_as<void>;
+            };
+        };
+
+      template<typename _Future,
+               typename _Value = __future_unbound_tag>
+      concept __shared_future = __future<_Future, _Value> && std::copyable<_Future>;
+
+      template<typename _Future,
+               typename _Value = __future_unbound_tag>
+      concept __shareable_future = __future<_Future, _Value> && requires (_Future f)
+        {
+          { f.share () } -> __shared_future;
+        };
 
       class __future_host;
       struct __future_host_checker;
-      template<Future _Future> struct __future_link_base;
-      template<Future _Future> struct __future_link_action;
-      template<Future _Future, typename R> struct __future_link_result;
+      template<__future _Future> struct __future_link_base;
 
       extern __future_host* __future_host_impl;
     };
@@ -72,96 +95,38 @@ namespace asynclib
       virtual bool check () const noexcept = 0;
       virtual void dispatch () noexcept = 0;
 
+      template<std::derived_from<__future_host_checker> _Class,
+               typename... Args>
+      static inline _Class* create (Args&&... args) noexcept
+        {
+
+          auto checker = new _Class (std::forward<Args> (args) ...);
+        return (__future_host_impl->launch (checker), checker);
+        }
+
       static void destroy (void* _p_checker) noexcept
         { delete (__future_host_checker*) _p_checker; }
     };
 
-  template<details::Future _Future> struct details::__future_link_base: public __future_host_checker
+  template<details::__future _Future> struct details::__future_link_base: public __future_host_checker
     {
 
-      typedef _Future future_type;
-      typedef unwrap_future_t<_Future> value_type;
-
-      future_type _future;
-
       virtual bool check () const noexcept override
-        { return _timeout != _future.wait_for (_zero); }
-
-    protected:
-
-      inline __future_link_base (future_type&& future) noexcept: _future (std::forward<_Future> (future))
-        { }
+        {
+          return _timeout != _future.wait_for (_zero);
+        }
 
     private:
 
       static constexpr auto _timeout = std::future_status::timeout;
       static constexpr auto _zero = std::chrono::milliseconds::zero ();
-    };
 
-  template<details::Future _Future> struct details::__future_link_action: public __future_link_base<_Future>
-    {
+    protected:
 
-      typedef __future_link_base<_Future> _parent;
-      typedef __future_link_base<_Future>::future_type future_type;
-      typedef std::move_only_function<void (future_type&)> action_type;
+      _Future _future;
 
-      static inline void create (action_type&& action, future_type&& future) noexcept
-        {
-
-          auto impl = new __future_link_action (std::move (action), std::forward<_Future> (future));
-          __future_host_impl->launch (impl);
-        }
-
-      virtual void dispatch () noexcept override
-        {
-          return _action (this->_future);
-        }
-
-    private:
-
-      action_type _action;
-
-      inline __future_link_action (action_type&& action, future_type&& future)
-      noexcept:
-             _parent (std::forward<_Future> (future)), _action (std::move (action))
-        { }
-    };
-
-  template<details::Future _Future, typename R> struct details::__future_link_result: public __future_link_base<_Future>
-    {
-
-      typedef __future_link_base<_Future> _parent;
-      typedef __future_link_base<_Future>::future_type future_type;
-      typedef std::move_only_function<R (future_type&)> action_type;
-      typedef std::promise<R> promise_type;
-
-      static inline std::future<R> create (action_type&& action, future_type&& future)
-        {
-
-          auto promise = std::promise<R> ();
-          auto next = promise.get_future ();
-
-          auto impl = new __future_link_result (std::move (action), std::forward<_Future> (future), std::move (promise));
-          __future_host_impl->launch (impl);
-        return next;
-        }
-
-      virtual void dispatch () noexcept override
-        {
-          try
-            { _promise.set_value (_action (this->_future)); }
-          catch (...)
-            { _promise.set_exception (std::current_exception ()); }
-        }
-
-    private:
-
-      action_type _action;
-      promise_type _promise;
-
-      inline __future_link_result (action_type&& action, future_type&& future, promise_type&& promise)
-          noexcept:
-          _parent (std::forward<_Future> (future)), _action (std::move (action)), _promise (std::move (promise))
+      inline __future_link_base (_Future&& future) noexcept (std::is_nothrow_move_constructible_v<_Future>):
+                                                  _future (std::move (future))
         { }
     };
 }

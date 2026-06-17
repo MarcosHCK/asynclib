@@ -37,6 +37,8 @@ struct __task_source
 
   GSource parent;
   asynclib::details::__future_host_checker* checker;
+
+  static inline GSource* create (asynclib::details::__future_host_checker* _checker) noexcept;
 };
 
 using __future_host_checker = asynclib::details::__future_host_checker;
@@ -71,14 +73,21 @@ static GSourceFuncs source_funcs =
   .closure_marshal = NULL,
 };
 
-void __future_host_impl::launch (__future_host_checker* checker) noexcept
+inline GSource* __task_source::create (asynclib::details::__future_host_checker* _checker) noexcept
 {
 
   auto source = g_source_new (&source_funcs, sizeof (__task_source));
+  ((__task_source*) source)->checker = _checker;
+return source;
+}
+
+void __future_host_impl::launch (__future_host_checker* checker) noexcept
+{
+
+  auto source = __task_source::create (checker);
 
   g_source_set_priority (source, G_PRIORITY_LOW);
   g_source_set_static_name (source, "[asynclib::__task_source]");
-  ((__task_source*) source)->checker = checker;
 
   g_source_attach (source, g_main_context_get_thread_default ());
   g_source_unref (source);
