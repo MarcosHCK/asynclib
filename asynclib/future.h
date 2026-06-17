@@ -17,6 +17,7 @@
 #pragma once
 #include <chrono>
 #include <future>
+#include <type_traits>
 
 namespace asynclib
 {
@@ -57,6 +58,8 @@ namespace asynclib
             {
               { p.set_value (v) } -> std::same_as<void>;
             };
+
+          requires std::is_constructible_v<_Promise>;
         };
 
       template<typename _Future,

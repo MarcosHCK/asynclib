@@ -57,12 +57,16 @@ namespace asynclib::details
       using signature_type = std::remove_pointer_t<decltype (get_signature_type (std::make_index_sequence<N - 2> ()))>;
     };
 
-  template<typename Result, typename...> struct __task_activate_function_implementation;
+  template<typename Result,
+           __promise<Result> promise_type,
+           typename...>
+  struct __task_activate_function_implementation;
 
-  template<typename Result, typename... Args> struct __task_activate_function_implementation<Result, void (Args...)>
+  template<typename Result,
+           __promise<Result> promise_type,
+           typename... Args>
+  struct __task_activate_function_implementation<Result, promise_type, void (Args...)>
     {
-
-      typedef std::promise<Result> promise_type;
 
       template<void (*_Activate) (Args..., GAsyncReadyCallback, gpointer),
                void (*_Complete) (GObject*, GAsyncResult*, gpointer)>
@@ -76,12 +80,20 @@ namespace asynclib::details
         }
     };
 
-  template<typename _Function, typename _Result>
-    requires (!__task_activate_function_details<_Function>::invalid)
+  template<typename _Function>
+  concept __task_activate_function_ = requires ()
+    {
+
+      requires !__task_activate_function_details<_Function>::invalid;
+    };
+
+  template<__task_activate_function_ _Function,
+           typename _Result,
+           __promise<_Result> promise_type>
   struct __task_activate_function
     {
 
       typedef typename __task_activate_function_extractor<_Function>::signature_type signature_type;
-      using implementation = __task_activate_function_implementation<_Result, signature_type>;
+      using implementation = __task_activate_function_implementation<_Result, promise_type, signature_type>;
     };
 }

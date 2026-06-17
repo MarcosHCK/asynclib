@@ -23,20 +23,24 @@
 namespace asynclib::details
 {
 
-  template<auto _Activate, auto _Complete, typename>
+  template<auto _Activate, auto _Complete,
+           __promise<typename __task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::return_value_type> promise_type,
+           typename>
     requires (! __task_activate_function_details<std::remove_pointer_t<decltype (_Activate)>>::invalid
            && ! __task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::invalid)
   struct __task_function_implementation;
 
-  template<auto _Activate, auto _Complete, typename... Args>
+  template<auto _Activate, auto _Complete,
+           __promise<typename __task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::return_value_type> promise_type,
+           typename... Args>
     requires (! __task_activate_function_details<std::remove_pointer_t<decltype (_Activate)>>::invalid
            && ! __task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::invalid)
-  struct __task_function_implementation<_Activate, _Complete, void (Args...)>
+  struct __task_function_implementation<_Activate, _Complete, promise_type, void (Args...)>
     {
 
-      typedef __task_complete_function<std::remove_pointer_t<decltype (_Complete)>> complete_function;
+      typedef __task_complete_function<std::remove_pointer_t<decltype (_Complete)>, promise_type> complete_function;
       typedef typename complete_function::return_value_type return_value_type;
-      typedef __task_activate_function<std::remove_pointer_t<decltype (_Activate)>, return_value_type> activate_function;
+      typedef __task_activate_function<std::remove_pointer_t<decltype (_Activate)>, return_value_type, promise_type> activate_function;
 
       static inline std::future<return_value_type> operator() (Args... args) noexcept
         {
@@ -46,20 +50,20 @@ namespace asynclib::details
         }
     };
 
-  template<auto _Activate, auto _Complete>
+  template<auto _Activate, auto _Complete,
+           __promise<typename __task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::return_value_type> promise_type>
     requires (! __task_activate_function_details<std::remove_pointer_t<decltype (_Activate)>>::invalid
            && ! __task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::invalid)
-  struct __task_function: public __task_function_implementation<_Activate, _Complete,
-                            typename __task_activate_function<std::remove_pointer_t<decltype (_Activate)>,
-                              typename __task_complete_function<std::remove_pointer_t<decltype (_Complete)>>::return_value_type>::signature_type>
+  struct __task_function: public __task_function_implementation<_Activate, _Complete, promise_type,
+                            typename __task_activate_function_extractor<std::remove_pointer_t<decltype (_Activate)>>::signature_type>
     {
 
-      typedef __task_complete_function<std::remove_pointer_t<decltype (_Complete)>> complete_function;
+      typedef __task_complete_function<std::remove_pointer_t<decltype (_Complete)>, promise_type> complete_function;
 
       typedef typename complete_function::return_value_type return_value_type;
       typedef typename complete_function::source_object_type source_object_type;
 
-      typedef __task_activate_function<std::remove_pointer_t<decltype (_Activate)>, return_value_type> activate_function;
+      typedef __task_activate_function<std::remove_pointer_t<decltype (_Activate)>, return_value_type, promise_type> activate_function;
 
       typedef typename activate_function::signature_type signature_type;
     };

@@ -29,9 +29,9 @@ static std::pair<GFile*, GIOStream*> g_file_new_tmp_finish_ (GAsyncResult* resul
 return std::make_pair (file, G_IO_STREAM (io_stream));
 }
 
-asynclib::gio_task<g_file_delete_async, g_file_delete_finish> g_file_delete_task;
-asynclib::gio_task<g_file_new_tmp_async, g_file_new_tmp_finish_> g_file_new_tmp_task;
-asynclib::gio_task<g_io_stream_close_async, g_io_stream_close_finish> g_io_stream_close_task;
+asynclib::gio_promise<g_file_delete_async, g_file_delete_finish> g_file_delete_task;
+asynclib::gio_promise<g_file_new_tmp_async, g_file_new_tmp_finish_> g_file_new_tmp_task;
+asynclib::gio_promise<g_io_stream_close_async, g_io_stream_close_finish> g_io_stream_close_task;
 
 static std::future<bool> io_work (GCancellable* cancellable)
 {

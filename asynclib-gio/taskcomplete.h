@@ -45,11 +45,10 @@ namespace asynclib::details
       static constexpr bool invalid = false;
     };
 
-  template<typename return_value_type>
+  template<typename return_value_type,
+           __promise<return_value_type> promise_type>
   struct __task_complete_function_implementation_collect
     {
-
-      typedef std::promise<return_value_type> promise_type;
 
       [[gnu::always_inline]]
       static inline void collect (promise_type* promise, return_value_type result, GError* error) noexcept
@@ -65,11 +64,9 @@ namespace asynclib::details
         }
     };
 
-  template<>
-  struct __task_complete_function_implementation_collect<void>
+  template<__promise<void> promise_type>
+  struct __task_complete_function_implementation_collect<void, promise_type>
     {
-
-      typedef std::promise<void> promise_type;
 
       [[gnu::always_inline]]
       static inline void collect (promise_type* promise, GError* error) noexcept
@@ -85,12 +82,13 @@ namespace asynclib::details
         }
     };
 
-  template<typename return_value_type, typename source_object_type>
+  template<typename return_value_type,
+           __promise<return_value_type> promise_type,
+           typename source_object_type>
   struct __task_complete_function_implementation_complete
     {
 
-      typedef std::promise<return_value_type> promise_type;
-      using collector = __task_complete_function_implementation_collect<return_value_type>;
+      using collector = __task_complete_function_implementation_collect<return_value_type, promise_type>;
 
       template<return_value_type (*_Function) (source_object_type, GAsyncResult*, GError**)>
       [[gnu::always_inline]]
@@ -107,12 +105,12 @@ namespace asynclib::details
         }
     };
 
-  template<typename return_value_type>
-  struct __task_complete_function_implementation_complete<return_value_type, void>
+  template<typename return_value_type,
+           __promise<return_value_type> promise_type>
+  struct __task_complete_function_implementation_complete<return_value_type, promise_type, void>
     {
 
-      typedef std::promise<return_value_type> promise_type;
-      using collector = __task_complete_function_implementation_collect<return_value_type>;
+      using collector = __task_complete_function_implementation_collect<return_value_type, promise_type>;
 
       template<return_value_type (*_Function) (GAsyncResult*, GError**)>
       [[gnu::always_inline]]
@@ -129,18 +127,27 @@ namespace asynclib::details
         }
     };
 
-  template<typename return_value_type, typename source_object_type>
-  struct __task_complete_function_implementation: public __task_complete_function_implementation_complete<return_value_type, source_object_type>
+  template<typename return_value_type,
+           __promise<return_value_type> promise_type,
+           typename source_object_type>
+  struct __task_complete_function_implementation: public __task_complete_function_implementation_complete<return_value_type, promise_type, source_object_type>
     {
     };
 
   template<typename _Function>
-    requires (!__task_complete_function_details<_Function>::invalid)
+  concept __task_complete_function_ = requires ()
+    {
+
+      requires !__task_complete_function_details<_Function>::invalid;
+    };
+
+  template<__task_complete_function_ _Function,
+           __promise<typename __task_complete_function_details<_Function>::return_value_type> promise_type>
   struct __task_complete_function
     {
 
       typedef typename __task_complete_function_details<_Function>::return_value_type return_value_type;
       typedef typename __task_complete_function_details<_Function>::source_object_type source_object_type;
-      using implementation = __task_complete_function_implementation<return_value_type, source_object_type>;
+      using implementation = __task_complete_function_implementation<return_value_type, promise_type, source_object_type>;
     };
 }

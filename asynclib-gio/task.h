@@ -26,7 +26,8 @@ namespace asynclib
   template<auto _Activate, auto _Complete>
     requires (! details::__task_activate_function_details<std::remove_pointer_t<decltype (_Activate)>>::invalid
            && ! details::__task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::invalid)
-  struct gio_task: public details::__task_function<_Activate, _Complete>
+  struct gio_promise: public details::__task_function<_Activate, _Complete,
+                        std::promise<typename details::__task_complete_function_details<std::remove_pointer_t<decltype (_Complete)>>::return_value_type>>
     {
     };
 }
