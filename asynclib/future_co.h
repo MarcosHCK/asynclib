@@ -25,6 +25,7 @@ namespace asynclib
     {
 
       template<typename Awaitable> struct __future_awaitable_base;
+      template<typename Awaitable> struct __future_awaitable_transform;
       template<typename Result, details::__promise<Result> Promise> struct __future_coroutine_base;
       template<__future _Future> struct __future_link_coroutine;
     }
@@ -87,13 +88,40 @@ namespace asynclib
       static constexpr auto _zero = std::chrono::milliseconds::zero ();
     };
 
-  template<typename Result, details::__promise<Result> Promise> struct details::__future_coroutine_base
+  template<details::__future _Future> struct details::__future_awaitable_transform<_Future&&>
+    {
+
+      static inline __future_awaitable_base<_Future> await_transform (_Future&& future)
+        {
+          return __future_awaitable_base<_Future> (std::move (future));
+        }
+    };
+
+  template<details::__future _Future> struct details::__future_awaitable_transform<_Future>
+    {
+
+      static inline __future_awaitable_base<_Future> await_transform (_Future future)
+        {
+          return __future_awaitable_base<_Future> (std::move (future));
+        }
+    };
+
+  template<details::__shareable_future _Future> struct details::__future_awaitable_transform<_Future&>
+    {
+
+      static inline __future_awaitable_base<decltype (std::declval<_Future> ().share ())> await_transform (_Future& future)
+        {
+          return __future_awaitable_base<decltype (std::declval<_Future> ().share ())> (future.share ());
+        }
+    };
+
+  template<typename _Result, details::__promise<_Result> _Promise> struct details::__future_coroutine_base
     {
 
       std::suspend_always final_suspend () noexcept
         { return { }; }
 
-      __future<Result> auto get_return_object ()
+      decltype (std::declval<_Promise> ().get_future ()) get_return_object ()
         { return _promise.get_future (); }
 
       std::suspend_never initial_suspend ()
@@ -105,20 +133,14 @@ namespace asynclib
       std::suspend_always await_transform (std::suspend_always)
         { return { }; }
 
-      template<__future _Future>
-      static inline __future_awaitable_base<_Future> await_transform (_Future&& future)
+      template<typename Awaitable>
+      static inline auto await_transform (Awaitable&& awaitable)
         {
-          return __future_awaitable_base<_Future> (std::forward<_Future> (future));
-        }
-
-      template<__shareable_future _Future>
-      static inline __future_awaitable_base<decltype (std::declval<_Future> ().share ())> await_transform (_Future& future)
-        {
-          return __future_awaitable_base<decltype (std::declval<_Future> ().share ())> (future.share ());
+          return __future_awaitable_transform<Awaitable>::await_transform (std::forward<Awaitable> (awaitable));
         }
 
     protected:
-      Promise _promise;
+      _Promise _promise;
     };
 }
 

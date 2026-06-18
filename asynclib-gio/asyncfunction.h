@@ -14,7 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#include <config.h>
-#include <asynclib-gio/task.h>
-#include <gio/gio.h>
-using namespace asynclib::details;
+#pragma once
+#include <asynclib-gio/asyncfunctionbase.h>
+
+namespace asynclib
+{
+
+  template<details::__async_function_begin auto _Begin,
+           details::__async_function_end auto _End>
+  struct async_function: details::__async_function<decltype (_Begin), decltype (_End)>
+    {
+
+      inline constexpr async_function () noexcept:
+                                         details::__async_function<decltype (_Begin), decltype (_End)> (_Begin, _End)
+        { }
+    };
+}

@@ -223,10 +223,16 @@ static void io_work_native (const gchar* hostname, guint16 port, GCancellable* c
   auto resolver = g_resolver_get_default ();
   auto task = g_task_new (NULL, cancellable, callback, user_data);
 
-  auto task_data = g_slice_new_<io_work_native_data> ();
+  auto task_data = new (g_slice_alloc0 (sizeof (io_work_native_data))) io_work_native_data ();
   task_data->set_stage (io_work_native_data::stage_0 { .port = port });
 
-  g_task_set_task_data (task, task_data, g_slice_free_<io_work_native_data>);
+  g_task_set_task_data (task, task_data, [](gpointer data)
+    {
+
+      ((io_work_native_data*) data)->~io_work_native_data ();
+      g_slice_free1 (sizeof (io_work_native_data), data);
+    });
+
   g_resolver_lookup_by_name_async (resolver, hostname, cancellable, io_work_native_co, task);
 }
 
@@ -354,7 +360,14 @@ static void io_work_native_co (GObject* source_object, GAsyncResult* result, gpo
         auto sum = g_strdup (g_checksum_get_string (stack.checksum));
         auto pair = std::make_pair (data.total, sum);
 
-        g_task_return_pointer (task, g_slice_new_<decltype (pair)> (std::move (pair)), g_slice_free_<decltype (pair)>);
+        auto pointer = new (g_slice_alloc0 (sizeof (std::pair<gsize, gchar*>))) std::pair<gsize, gchar*> (std::move (pair));
+
+        g_task_return_pointer (task, pointer, [](gpointer mem)
+          {
+            ((std::pair<gsize, gchar*>*) mem)->~pair<gsize, gchar*> ();
+            g_slice_free1 (sizeof (std::pair<gsize, gchar*>), mem);
+          });
+
         g_object_unref (task);
         break;
       }
@@ -381,7 +394,7 @@ static std::future<GIOStream*> reach_any (GList* addresses, guint16 port, GCance
 throw asynclib::gio_error::literal (G_IO_ERROR, G_IO_ERROR_FAILED, "could not connect to any resolved address");
 }
 
-asynclib::gio_promise<g_socket_client_connect_async, g_socket_client_connect_finish> g_socket_client_connect_task;
+asynclib::async_function<g_socket_client_connect_async, g_socket_client_connect_finish> g_socket_client_connect_task;
 
 static std::future<GIOStream*> reach_one (GInetAddress* inet_address, guint16 port, GCancellable* cancellable)
 {
@@ -393,12 +406,22 @@ static std::future<GIOStream*> reach_one (GInetAddress* inet_address, guint16 po
 
   auto socket_address = g_inet_socket_address_new (inet_address, port);
   auto socket_connectable = G_SOCKET_CONNECTABLE (socket_address);
-  auto socket_connection_task = g_socket_client_connect_task (socket_client, socket_connectable, cancellable);
 
-  g_object_unref (socket_address);
-  g_object_unref (socket_client);
+  try
+    {
 
-co_return (GIOStream*) co_await std::move (socket_connection_task);
+      auto io_stream = co_await g_socket_client_connect_task (socket_client, socket_connectable, cancellable);
+
+      g_object_unref (socket_address);
+      g_object_unref (socket_client);
+    co_return (GIOStream*) io_stream;
+    }
+  catch (...)
+    {
+      g_object_unref (socket_address);
+      g_object_unref (socket_client);
+      throw;
+    }
 }
 
 static inline std::pair<gboolean, gsize> g_output_stream_write_all_finish_ (GOutputStream* stream, GAsyncResult* result, GError** error)
@@ -410,9 +433,9 @@ static inline std::pair<gboolean, gsize> g_output_stream_write_all_finish_ (GOut
 return std::make_pair (success, written);
 }
 
-asynclib::gio_promise<g_input_stream_read_async, g_input_stream_read_finish> g_input_stream_read_task;
-asynclib::gio_promise<g_resolver_lookup_by_name_async, g_resolver_lookup_by_name_finish> g_resolver_lookup_by_name_task;
-asynclib::gio_promise<g_output_stream_write_all_async, g_output_stream_write_all_finish_> g_output_stream_write_all_task;
+asynclib::async_function<g_input_stream_read_async, g_input_stream_read_finish> g_input_stream_read_task;
+asynclib::async_function<g_resolver_lookup_by_name_async, g_resolver_lookup_by_name_finish> g_resolver_lookup_by_name_task;
+asynclib::async_function<g_output_stream_write_all_async, g_output_stream_write_all_finish_> g_output_stream_write_all_task;
 
 static std::future<std::pair<gsize, gchar*>> io_work_ours (const gchar* hostname, guint16 port, GCancellable* cancellable)
 {

@@ -29,18 +29,19 @@ static std::pair<GFile*, GIOStream*> g_file_new_tmp_finish_ (GAsyncResult* resul
 return std::make_pair (file, G_IO_STREAM (io_stream));
 }
 
-asynclib::gio_promise<g_file_delete_async, g_file_delete_finish> g_file_delete_task;
-asynclib::gio_promise<g_file_new_tmp_async, g_file_new_tmp_finish_> g_file_new_tmp_task;
-asynclib::gio_promise<g_io_stream_close_async, g_io_stream_close_finish> g_io_stream_close_task;
+asynclib::async_function<g_file_delete_async, g_file_delete_finish> g_file_delete_task;
+asynclib::async_function<g_file_new_tmp_async, g_file_new_tmp_finish_> g_file_new_tmp_task;
+asynclib::async_function<g_io_stream_close_async, g_io_stream_close_finish> g_io_stream_close_task;
 
 static std::future<bool> io_work (GCancellable* cancellable)
 {
 
   auto [ file, io_stream ] = co_await g_file_new_tmp_task (NULL, G_PRIORITY_DEFAULT, cancellable);
+  // auto [ file, io_stream ] = co_await g_file_new_tmp_task (NULL, G_PRIORITY_DEFAULT, cancellable);
 
   auto exists = g_file_test (g_file_peek_path (file), G_FILE_TEST_EXISTS);
 
-  co_await g_io_stream_close_task ((GIOStream*) io_stream, G_PRIORITY_DEFAULT, cancellable);
+  // co_await g_io_stream_close_task ((GIOStream*) io_stream, G_PRIORITY_DEFAULT, cancellable);
   co_await g_file_delete_task (file, G_PRIORITY_DEFAULT, cancellable);
 co_return exists;
 }

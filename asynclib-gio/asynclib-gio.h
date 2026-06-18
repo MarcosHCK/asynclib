@@ -16,5 +16,5 @@
  */
 #pragma once
 #include <asynclib/asynclib.h>
-#include <asynclib-gio/gioerror.h>
-#include <asynclib-gio/task.h>
+#include <asynclib-gio/asyncfunction.h>
+#include <asynclib-gio/asyncfunctionco.h>
