@@ -18,7 +18,7 @@
 gio_dep = dependency ('gio-2.0',required: true)
 
 __asynclib_gio_headers = [ 'asyncfunction.h', 'asyncfunctionbase.h', 'asyncfunctionbegin.h', 'asyncfunctionco.h', 'asyncfunctioncoroutine.h', 'asyncfunctionend.h', 'gioerror.h' ]
-__asynclib_gio_sources = [ 'gioerror.cc' ]
+__asynclib_gio_sources = [ 'gioerror.cc', ]
 
 __asynclib_gio_lib = library ('asynclib-gio',
   c_args: [ '-DG_LOG_DOMAIN="Asynclib.GIO"', '-DG_LOG_USE_STRUCTURED=1',

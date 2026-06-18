@@ -394,7 +394,7 @@ static std::future<GIOStream*> reach_any (GList* addresses, guint16 port, GCance
 throw asynclib::gio_error::literal (G_IO_ERROR, G_IO_ERROR_FAILED, "could not connect to any resolved address");
 }
 
-asynclib::async_function<g_socket_client_connect_async, g_socket_client_connect_finish> g_socket_client_connect_task;
+asynclib::async_function g_socket_client_connect_task (g_socket_client_connect_async, g_socket_client_connect_finish);
 
 static std::future<GIOStream*> reach_one (GInetAddress* inet_address, guint16 port, GCancellable* cancellable)
 {
@@ -433,9 +433,9 @@ static inline std::pair<gboolean, gsize> g_output_stream_write_all_finish_ (GOut
 return std::make_pair (success, written);
 }
 
-asynclib::async_function<g_input_stream_read_async, g_input_stream_read_finish> g_input_stream_read_task;
-asynclib::async_function<g_resolver_lookup_by_name_async, g_resolver_lookup_by_name_finish> g_resolver_lookup_by_name_task;
-asynclib::async_function<g_output_stream_write_all_async, g_output_stream_write_all_finish_> g_output_stream_write_all_task;
+asynclib::async_function g_input_stream_read_task (g_input_stream_read_async, g_input_stream_read_finish);
+asynclib::async_function g_resolver_lookup_by_name_task (g_resolver_lookup_by_name_async, g_resolver_lookup_by_name_finish);
+asynclib::async_function g_output_stream_write_all_task (g_output_stream_write_all_async, g_output_stream_write_all_finish_);
 
 static std::future<std::pair<gsize, gchar*>> io_work_ours (const gchar* hostname, guint16 port, GCancellable* cancellable)
 {

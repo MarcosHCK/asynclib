@@ -20,13 +20,12 @@
 namespace asynclib
 {
 
-  template<details::__async_function_begin auto _Begin,
-           details::__async_function_end auto _End>
-  struct async_function: details::__async_function<decltype (_Begin), decltype (_End)>
+  template<details::__async_function_begin _Begin,
+           details::__async_function_end _End>
+  struct async_function: details::__async_function<_Begin, _End>
     {
 
-      inline constexpr async_function () noexcept:
-                                         details::__async_function<decltype (_Begin), decltype (_End)> (_Begin, _End)
+      inline constexpr async_function (_Begin begin, _End end) noexcept: details::__async_function<_Begin, _End> (begin, end)
         { }
     };
 }

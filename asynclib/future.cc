@@ -16,8 +16,8 @@
  */
 #include <config.h>
 #include <asynclib/future.h>
-#include <asynclib/future_co.h>
-#include <asynclib/future_op.h>
+#include <asynclib/futurechain.h>
+#include <asynclib/futurecoroutine.h>
 #include <glib.h>
 
 class __future_host_impl: public asynclib::details::__future_host

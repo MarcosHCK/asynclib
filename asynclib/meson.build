@@ -17,7 +17,7 @@
 
 glib_dep = dependency ('glib-2.0', required: true)
 
-__asynclib_headers = [ 'asynclib.h', 'future.h', 'future_co.h', 'future_op.h' ]
+__asynclib_headers = [ 'asynclib.h', 'future.h', 'futurechain.h', 'futurecoroutine.h' ]
 __asynclib_sources = [ 'future.cc' ]
 
 __asynclib_lib = library ('asynclib',

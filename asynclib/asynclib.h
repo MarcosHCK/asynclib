@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <asynclib/coroutine.h>
 #include <asynclib/future.h>
-#include <asynclib/future_co.h>
-#include <asynclib/future_op.h>
+#include <asynclib/futurechain.h>
+#include <asynclib/futurecoroutine.h>

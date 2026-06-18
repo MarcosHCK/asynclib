@@ -21,26 +21,26 @@ c_args = [ '-DG_LOG_DOMAIN="Asynclib.Tests"', '-DG_LOG_USE_STRUCTURED=1',
 
 testpath = meson.current_source_dir ().replace (basepath + '/', '')
 
-test ((testpath + '/future_co').replace ('/', '.'),
-      executable ('future_co',
+test ((testpath + '/futurechain').replace ('/', '.'),
+      executable ('futurechain',
             c_args: c_args +
-                    [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'future_co') ],
+                    [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'futurechain') ],
             cpp_args: c_args +
-                      [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'future_co') ],
+                      [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'futurechain') ],
             build_by_default: false,
             dependencies: [ config_dep, __asynclib_dep, __testing_dep ],
-            sources: 'future_co.cc'),
+            sources: 'futurechain.cc'),
       env: [ 'G_TEST_BUILDDIR=@0@'.format (meson.current_build_dir ()),
              'G_TEST_SRCDIR=@0@'.format (meson.current_source_dir ()) ], )
 
-test ((testpath + '/future_op').replace ('/', '.'),
-      executable ('future_op',
+test ((testpath + '/futurecoroutine').replace ('/', '.'),
+      executable ('futurecoroutine',
             c_args: c_args +
-                    [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'future_op') ],
+                    [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'futurecoroutine') ],
             cpp_args: c_args +
-                      [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'future_op') ],
+                      [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'futurecoroutine') ],
             build_by_default: false,
             dependencies: [ config_dep, __asynclib_dep, __testing_dep ],
-            sources: 'future_op.cc'),
+            sources: 'futurecoroutine.cc'),
       env: [ 'G_TEST_BUILDDIR=@0@'.format (meson.current_build_dir ()),
              'G_TEST_SRCDIR=@0@'.format (meson.current_source_dir ()) ], )
