@@ -72,7 +72,9 @@ namespace asynclib::details
 
       std::optional<_Result> _result;
 
-      inline void complete (GObject* source_object, GAsyncResult* async_result) noexcept
+      inline void complete (GObject* source_object, GAsyncResult* async_result)
+          noexcept (__async_function_end_details<_End>::noexcept_v
+                 && std::is_nothrow_move_constructible_v<_Result>)
         {
 
           GError* error = NULL;
@@ -81,7 +83,7 @@ namespace asynclib::details
 
             this->_error = error;
           else
-            this->_result = result;
+            this->_result.emplace (std::move (result));
         }
     };
 
@@ -101,7 +103,8 @@ namespace asynclib::details
 
     protected:
 
-      inline void complete (GObject* source_object, GAsyncResult* async_result) noexcept
+      inline void complete (GObject* source_object, GAsyncResult* async_result)
+          noexcept (__async_function_end_details<_End>::noexcept_v)
         {
 
           GError* error = NULL;

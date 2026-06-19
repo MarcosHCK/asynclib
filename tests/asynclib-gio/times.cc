@@ -22,7 +22,7 @@ using namespace testing;
 
 static void io_work_native (const gchar* hostname, guint16 port, GCancellable* cancellable, GAsyncReadyCallback callback, gpointer user_data);
 static std::pair<gsize, gchar*> io_work_native_finish (GAsyncResult* result, GError** error);
-static std::future<std::pair<gsize, gchar*>> io_work_ours (const gchar* hostname, guint16 port, GCancellable* cancellable);
+static asynclib::async_task<std::pair<gsize, gchar*>> io_work_ours (const gchar* hostname, guint16 port, GCancellable* cancellable);
 
 int main (int argc, char* argv[])
 {
@@ -92,12 +92,23 @@ int main (int argc, char* argv[])
           gsize total = 0;
           guint ready = 0;
 
+          auto task = io_work_ours ("localhost", 8000, NULL);
+          struct D { decltype (digest)* digest; decltype (task.end) end; decltype (ready)* ready; decltype (took)* took; decltype (total)* total; }
+               d = { .digest = &digest, .end = task.end, .ready = &ready, .took = &took, .total = &total };
           g_test_timer_start ();
 
-          io_work_ours ("localhost", 8000, NULL)
-            >> [&] (std::future<std::pair<gsize, gchar*>>& future) noexcept
-               { took = g_test_timer_elapsed ();
-                 auto pair = future.get (); total = pair.first; digest = pair.second; g_atomic_int_set (&ready, 1); };
+          task.begin ([](GObject*, GAsyncResult* result, gpointer user_data)
+            {
+
+              auto p = (D*) user_data;
+              *p->took = g_test_timer_elapsed ();
+              auto e = (GError*) nullptr;
+              auto r = p->end (result, &e);
+
+              g_assert_no_error (e);
+              (void) (*p->digest = r.second, *p->total = r.first);
+              g_atomic_int_set (p->ready, 1);
+            }, &d);
 
           for (auto context = g_main_context_get_thread_default (); 0 == g_atomic_int_get (&ready); )
             g_main_context_iteration (context, FALSE);
@@ -378,10 +389,10 @@ static void io_work_native_co (GObject* source_object, GAsyncResult* result, gpo
 
 /* ours */
 
-static std::future<GIOStream*> reach_any (GList* addresses, guint16 port, GCancellable* cancellable);
-static std::future<GIOStream*> reach_one (GInetAddress* inet_address, guint16 port, GCancellable* cancellable);
+static asynclib::async_task<GIOStream*> reach_any (GList* addresses, guint16 port, GCancellable* cancellable);
+static asynclib::async_task<GIOStream*> reach_one (GInetAddress* inet_address, guint16 port, GCancellable* cancellable);
 
-static std::future<GIOStream*> reach_any (GList* addresses, guint16 port, GCancellable* cancellable)
+static asynclib::async_task<GIOStream*> reach_any (GList* addresses, guint16 port, GCancellable* cancellable)
 {
 
   for (auto link = addresses; NULL != link; link = link->next)
@@ -396,7 +407,7 @@ throw asynclib::gio_error::literal (G_IO_ERROR, G_IO_ERROR_FAILED, "could not co
 
 asynclib::async_function g_socket_client_connect_task (g_socket_client_connect_async, g_socket_client_connect_finish);
 
-static std::future<GIOStream*> reach_one (GInetAddress* inet_address, guint16 port, GCancellable* cancellable)
+static asynclib::async_task<GIOStream*> reach_one (GInetAddress* inet_address, guint16 port, GCancellable* cancellable)
 {
 
   auto socket_client = g_socket_client_new ();
@@ -437,7 +448,7 @@ asynclib::async_function g_input_stream_read_task (g_input_stream_read_async, g_
 asynclib::async_function g_resolver_lookup_by_name_task (g_resolver_lookup_by_name_async, g_resolver_lookup_by_name_finish);
 asynclib::async_function g_output_stream_write_all_task (g_output_stream_write_all_async, g_output_stream_write_all_finish_);
 
-static std::future<std::pair<gsize, gchar*>> io_work_ours (const gchar* hostname, guint16 port, GCancellable* cancellable)
+static asynclib::async_task<std::pair<gsize, gchar*>> io_work_ours (const gchar* hostname, guint16 port, GCancellable* cancellable)
 {
 
   auto resolver = g_resolver_get_default ();

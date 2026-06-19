@@ -58,6 +58,9 @@ namespace asynclib
       static gio_error printf (unsigned domain, int code, const char* format, ...)
         noexcept (std::is_nothrow_constructible_v<gio_error, struct _GError*>) G_GNUC_PRINTF (3, 4);
 
+      inline struct _GError* steal () noexcept
+        { auto g_error = _g_error; return (_g_error = nullptr, g_error); }
+
       virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override;
 
       inline gio_error& operator= (gio_error&& o) noexcept

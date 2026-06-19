@@ -22,10 +22,5 @@ namespace asynclib
 
   template<details::__async_function_begin _Begin,
            details::__async_function_end _End>
-  struct async_function: details::__async_function<_Begin, _End>
-    {
-
-      inline constexpr async_function (_Begin begin, _End end) noexcept: details::__async_function<_Begin, _End> (begin, end)
-        { }
-    };
+  using async_function = details::__async_function<_Begin, _End>;
 }

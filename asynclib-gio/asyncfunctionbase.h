@@ -30,7 +30,7 @@ namespace asynclib::details
       inline constexpr __async_function_invocation_base (_End _end) noexcept: end (_end)
         { }
 
-      inline typename __async_function_end_details<_End>::return_type finish (GObject* source_object, GAsyncResult* result, GError** error)
+      inline typename __async_function_end_details<_End>::return_type finish (GObject* source_object, GAsyncResult* result, GError** error) const
           noexcept (__async_function_end_details<_End>::noexcept_v)
         {
           return end ((_Referrer) source_object, result, error);
@@ -46,7 +46,7 @@ namespace asynclib::details
       inline constexpr __async_function_invocation_base (_End _end) noexcept: end (_end)
         { }
 
-      inline __async_function_end_details<_End>::return_type finish (GObject* source_object, GAsyncResult* result, GError** error)
+      inline __async_function_end_details<_End>::return_type finish (GObject* source_object, GAsyncResult* result, GError** error) const
           noexcept (__async_function_end_details<_End>::noexcept_v)
         {
           return end (result, error);
@@ -59,16 +59,16 @@ namespace asynclib::details
   struct __async_function_invocation: public __async_function_invocation_base<_End, typename __async_function_end_details<_End>::referrer_type>
     {
 
-      Functor functor;
+      Functor begin;
 
-      inline constexpr __async_function_invocation (_End _end, Functor&& _functor) noexcept (std::is_nothrow_move_constructible_v<Functor>):
+      inline constexpr __async_function_invocation (Functor&& _begin, _End _end) noexcept (std::is_nothrow_move_constructible_v<Functor>):
           __async_function_invocation_base<_End, typename __async_function_end_details<_End>::referrer_type> (_end),
-          functor (std::move (_functor))
+          begin (std::move (_begin))
         { }
 
-      inline constexpr void operator() (GAsyncReadyCallback callback, gpointer user_data) const noexcept (__async_function_begin_details<_Begin>::noexcept_v)
+      inline constexpr void operator() (GAsyncReadyCallback callback, gpointer user_data) noexcept (__async_function_begin_details<_Begin>::noexcept_v)
         {
-          functor (callback, user_data);
+          begin (callback, user_data);
         }
     };
 
@@ -96,7 +96,7 @@ namespace asynclib::details
               begin (args..., callback, user_data);
             };
 
-        return __async_function_invocation<_Begin, _End, decltype (lambda)> (end, std::move (lambda));
+        return __async_function_invocation<_Begin, _End, decltype (lambda)> (std::move (lambda), end);
         }
 
       inline constexpr __async_function_invoker_base (_Begin _begin, _End _end) noexcept: begin (_begin), end (_end) 

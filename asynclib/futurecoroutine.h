@@ -107,30 +107,3 @@ namespace asynclib::details
         }
     };
 }
-
-namespace std
-{
-
-  template<typename T, typename... Args> struct coroutine_traits<std::future<T>, Args ...>
-    {
-
-      struct promise_type: public asynclib::details::__coroutine_promise_base<T, std::promise<T>>
-        {
-
-          template<std::convertible_to<T> U = T>
-          void return_value (U&& value)
-            { this->_promise.set_value (std::forward<U> (value)); }
-        };
-    };
-
-  template<typename... Args> struct coroutine_traits<std::future<void>, Args ...>
-    {
-
-      struct promise_type: public asynclib::details::__coroutine_promise_base<void, std::promise<void>>
-        {
-
-          void return_void ()
-            { this->_promise.set_value (); }
-        };
-    };
-}

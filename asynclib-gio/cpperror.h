@@ -15,7 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <asynclib/asynclib.h>
-#include <asynclib-gio/asyncfunction.h>
-#include <asynclib-gio/asyncfunctionco.h>
-#include <asynclib-gio/coroutine.h>
+#include <exception>
+#include <glib.h>
+
+#define ASYNCLIB_CPP_ERROR (asynclib_cpp_error_quark ())
+
+GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr);
+
+G_BEGIN_DECLS
+
+  GQuark asynclib_cpp_error_quark () G_GNUC_CONST;
+
+G_END_DECLS

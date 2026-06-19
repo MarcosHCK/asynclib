@@ -33,7 +33,7 @@ asynclib::async_function g_file_delete_task (g_file_delete_async, g_file_delete_
 asynclib::async_function g_file_new_tmp_task (g_file_new_tmp_async, g_file_new_tmp_finish_);
 asynclib::async_function g_io_stream_close_task (g_io_stream_close_async, g_io_stream_close_finish);
 
-static std::future<bool> io_work (GCancellable* cancellable)
+static asynclib::async_task<bool> io_work (GCancellable* cancellable)
 {
 
   auto [ file, io_stream ] = co_await g_file_new_tmp_task (NULL, G_PRIORITY_DEFAULT, cancellable);
@@ -57,8 +57,22 @@ int main (int argc, char* argv[])
       bool r = false;
       guint ready = 0;
 
-      io_work (NULL)
-        >> [&](std::future<bool>& future) noexcept { r = future.get (); g_atomic_int_set (&ready, 1); };;
+      auto task = io_work (NULL);
+
+      struct D { decltype (task.end) end; decltype (r)* r; decltype (ready)* ready; }
+           d = { .end = task.end, .r = &r, .ready = &ready };
+
+      task.begin ([](GObject*, GAsyncResult* result, gpointer user_data)
+        {
+
+          auto p = (D*) user_data;
+          auto e = (GError*) nullptr;
+          auto r = p->end (result, &e);
+          *p->r = r;
+
+          g_assert_no_error (e);
+          g_atomic_int_set (p->ready, 1);
+        }, &d);
 
       for (auto context = g_main_context_get_thread_default (); 0 == g_atomic_int_get (&ready); )
         g_main_context_iteration (context, FALSE);
