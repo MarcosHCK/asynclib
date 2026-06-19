@@ -27,18 +27,18 @@ namespace asynclib::details
       static constexpr bool invalid = true;
     };
 
-  template<bool _Noexcept, typename... Args>
-  struct __async_function_begin_details<void (*) (Args...) noexcept (_Noexcept)>
+  template<bool Noexcept, typename... Args>
+  struct __async_function_begin_details<void (*) (Args...) noexcept (Noexcept)>
     {
 
       using arguments_tuple = std::tuple<Args ...>;
 
       static constexpr unsigned arguments_n = sizeof...(Args);
-      static constexpr bool noexcept_v = _Noexcept;
+      static constexpr bool noexcept_v = Noexcept;
 
       template<size_t... Is>
       static auto get_signature_type (std::index_sequence<Is...>)
-        -> void (*) (typename std::tuple_element_t<Is, arguments_tuple> ...) noexcept (_Noexcept);
+        -> void (*) (typename std::tuple_element_t<Is, arguments_tuple> ...) noexcept (Noexcept);
 
       using signature_type = std::remove_pointer_t<decltype (get_signature_type (std::make_index_sequence<arguments_n - 2> ()))>;
 
@@ -46,6 +46,6 @@ namespace asynclib::details
                                    || !std::is_convertible_v<typename std::tuple_element_t<arguments_n - 1, arguments_tuple>, gpointer>;
     };
 
-  template<typename _Function>
-  concept __async_function_begin = !__async_function_begin_details<_Function>::invalid;
+  template<typename Function>
+  concept __async_function_begin = !__async_function_begin_details<Function>::invalid;
 }

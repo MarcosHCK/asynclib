@@ -16,6 +16,7 @@
  */
 #pragma once
 #include <gio/gio.h>
+#include <type_traits>
 
 namespace asynclib::details
 {
@@ -26,28 +27,30 @@ namespace asynclib::details
       static constexpr bool invalid = true;
     };
 
-  template<bool _Noexcept, typename _Result, typename _Referrer>
-  struct __async_function_end_details<_Result (*) (_Referrer, GAsyncResult*, GError**) noexcept (_Noexcept)>
+  template<bool Noexcept, typename Result, typename Referrer>
+    requires (std::is_default_constructible_v<Result>)
+  struct __async_function_end_details<Result (*) (Referrer, GAsyncResult*, GError**) noexcept (Noexcept)>
     {
 
-      using referrer_type = _Referrer;
-      using return_type = _Result;
+      using referrer_type = Referrer;
+      using return_type = Result;
 
-      static constexpr bool noexcept_v = _Noexcept;
+      static constexpr bool noexcept_v = Noexcept;
       static constexpr bool invalid = false;
     };
 
-  template<bool _Noexcept, typename _Result>
-  struct __async_function_end_details<_Result (*) (GAsyncResult*, GError**) noexcept (_Noexcept)>
+  template<bool Noexcept, typename Result>
+    requires (std::is_default_constructible_v<Result>)
+  struct __async_function_end_details<Result (*) (GAsyncResult*, GError**) noexcept (Noexcept)>
     {
 
       using referrer_type = void;
-      using return_type = _Result;
+      using return_type = Result;
 
-      static constexpr bool noexcept_v = _Noexcept;
+      static constexpr bool noexcept_v = Noexcept;
       static constexpr bool invalid = false;
     };
 
-  template<typename _Function>
-  concept __async_function_end = !__async_function_end_details<_Function>::invalid;
+  template<typename Function>
+  concept __async_function_end = !__async_function_end_details<Function>::invalid;
 }

@@ -20,56 +20,62 @@
 #include <glib/gmacros.h>
 
 struct _GError;
+#define ASYNCLIB_CPP_ERROR (asynclib_cpp_error_quark ())
+
+std::exception_ptr asynclib_cpp_error_get_ptr (struct _GError* error) noexcept;
+struct _GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr) noexcept;
+unsigned asynclib_cpp_error_quark (void) G_GNUC_CONST;
 
 namespace asynclib
 {
 
-  class gio_error: public std::exception
+  class glib_error: public std::exception
     {
 
       struct _GError* _g_error = nullptr;
-      using _parent = std::exception;
 
       void unlink () noexcept;
     public:
 
-      inline ~gio_error () noexcept
+      inline ~glib_error () noexcept
         { unlink (); }
 
-      inline gio_error () noexcept (std::is_nothrow_constructible_v<_parent>):
-                          gio_error (nullptr)
+      inline glib_error () noexcept (std::is_nothrow_constructible_v<std::exception>):
+                           glib_error (nullptr)
         { }
 
-      inline gio_error (gio_error&& o) noexcept (std::is_nothrow_move_constructible_v<_parent>):
-                                      _parent (std::move (o)), _g_error (o._g_error)
+      inline glib_error (glib_error&& o) noexcept (std::is_nothrow_move_constructible_v<std::exception>):
+                                         std::exception (std::move (o)), _g_error (o._g_error)
         { o._g_error = nullptr; }
 
-      gio_error (const gio_error&) noexcept (std::is_nothrow_copy_constructible_v<_parent>);
+      glib_error (const glib_error&) noexcept (std::is_nothrow_copy_constructible_v<std::exception>);
 
-      inline gio_error (struct _GError* g_error) noexcept (std::is_nothrow_constructible_v<_parent>):
-                                                _parent (), _g_error (g_error)
+      inline glib_error (struct _GError* g_error) noexcept (std::is_nothrow_constructible_v<std::exception>):
+                                                  std::exception (), _g_error (g_error)
         { }
 
       constexpr const struct _GError* get_g_error () const noexcept { return _g_error; }
 
-      static gio_error literal (unsigned domain, int code, const char* message)
-        noexcept (std::is_nothrow_constructible_v<gio_error, struct _GError*>);
+      static glib_error literal (unsigned domain, int code, const char* message)
+        noexcept (std::is_nothrow_constructible_v<glib_error, struct _GError*>);
 
-      static gio_error printf (unsigned domain, int code, const char* format, ...)
-        noexcept (std::is_nothrow_constructible_v<gio_error, struct _GError*>) G_GNUC_PRINTF (3, 4);
+      static glib_error printf (unsigned domain, int code, const char* format, ...)
+        noexcept (std::is_nothrow_constructible_v<glib_error, struct _GError*>) G_GNUC_PRINTF (3, 4);
 
       inline struct _GError* steal () noexcept
         { auto g_error = _g_error; return (_g_error = nullptr, g_error); }
 
+      static void rethrow (struct _GError* error) G_GNUC_NORETURN;
+
       virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override;
 
-      inline gio_error& operator= (gio_error&& o) noexcept
+      inline glib_error& operator= (glib_error&& o) noexcept
         {
           unlink ();
           return (std::swap (_g_error, o._g_error), *this);
         }
 
-      gio_error& operator= (const gio_error& o) noexcept;
+      glib_error& operator= (const glib_error& o) noexcept;
 
       inline bool operator== (std::nullptr_t) const noexcept
         { return nullptr == _g_error; }

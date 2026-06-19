@@ -121,7 +121,6 @@ add_project_link_arguments (cpp.get_supported_link_arguments (warning_c_link_arg
 
 # source tree
 subdir ('asynclib')
-subdir ('asynclib-gio')
 
 # tests
 subdir ('tests')

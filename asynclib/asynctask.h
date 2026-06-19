@@ -15,7 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <asynclib/asynclib.h>
-#include <asynclib-gio/asyncfunction.h>
-#include <asynclib-gio/asyncfunctionco.h>
-#include <asynclib-gio/coroutine.h>
+#include <asynclib/asyncfunctioninvocation.h>
+#include <functional>
+#include <type_traits>
+
+namespace asynclib::details
+{
+
+  template<typename T>
+  concept __async_task_target = requires ()
+    {
+
+      requires std::is_default_constructible_v<T> || std::is_same_v<T, void>;
+      requires std::is_move_constructible_v<T> || std::is_same_v<T, void>;
+    };
+
+  template<__async_task_target Return>
+  using __async_task = __async_function_invocation<void (*) (GAsyncReadyCallback, gpointer),
+                                                   Return (*) (GAsyncResult*, GError**),
+                                                   std::move_only_function<void (GAsyncReadyCallback, gpointer)>>;
+}

@@ -15,7 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <asynclib/coroutine.h>
-#include <asynclib/future.h>
-#include <asynclib/futurechain.h>
-#include <asynclib/futurecoroutine.h>
+#include <asynclib/asyncfunction.h>
+#include <asynclib/asyncfunctionawaitable.h>
+#include <asynclib/asynctask.h>
+#include <asynclib/asynctaskcoroutine.h>
+
+namespace asynclib
+{
+
+  template<details::__async_function_begin _Begin,
+           details::__async_function_end _End>
+  using async_function = details::__async_function<_Begin, _End>;
+
+  template<details::__async_task_target Return>
+  using async_task = details::__async_task<Return>;
+}

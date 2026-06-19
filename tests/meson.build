@@ -36,7 +36,4 @@ __testing_lib = static_library ('testing',
 __testing_dep = declare_dependency (dependencies: [ config_dep, gio_dep ],
   link_with: __testing_lib)
 
-foreach bit: [ 'asynclib', 'asynclib-gio' ]
-
-  subdir (bit)
-endforeach
+subdir ('asynclib')
