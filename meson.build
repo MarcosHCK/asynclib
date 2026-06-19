@@ -38,7 +38,6 @@ git_version_stage = git_version_list.get (1)
 config = configuration_data ()
 
 config.set ('DEBUG', get_option ('debug').to_int ())
-config.set ('DEVELOP', get_option ('develop').to_int ())
 # TODO: edit this
 config.set_quoted ('PACKAGE_BUGREPORT', 'nouser@nohost.com')
 config.set_quoted ('PACKAGE_NAME', meson.project_name ())
@@ -63,6 +62,7 @@ if cc.get_id () == 'gcc' or cc.get_id () == 'clang'
 
   warning_c_args = [
 
+    '-fno-omit-frame-pointer',
     '-Waggregate-return',
     '-Warray-bounds',
     '-Wduplicated-branches',
@@ -133,7 +133,6 @@ summary ({
     'C compiler': cc.get_id (),
     'C++ compiler': cpp.get_id (),
     'debug build': get_option ('debug') ? 'yes' : 'no',
-    'develop build': get_option ('develop') ? 'yes' : 'no',
     'host cpu': host_machine.cpu_family (),
     'host endian': host_machine.endian (),
     'host system': host_machine.system (),

@@ -34,6 +34,18 @@ test ((testpath + '/future').replace ('/', '.'),
       env: [ 'G_TEST_BUILDDIR=@0@'.format (meson.current_build_dir ()),
              'G_TEST_SRCDIR=@0@'.format (meson.current_source_dir ()) ], )
 
+test ((testpath + '/stress').replace ('/', '.'),
+      executable ('stress',
+            c_args: c_args +
+                    [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'stress') ],
+            cpp_args: c_args +
+                      [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'stress') ],
+            build_by_default: false,
+            dependencies: [ config_dep, __asynclib_dep, __testing_dep ],
+            sources: [ 'server.cc', 'server.h', 'stress.cc' ]),
+      env: [ 'G_TEST_BUILDDIR=@0@'.format (meson.current_build_dir ()),
+             'G_TEST_SRCDIR=@0@'.format (meson.current_source_dir ()) ], )
+
 test ((testpath + '/task').replace ('/', '.'),
       executable ('task',
             c_args: c_args +
