@@ -15,21 +15,32 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <asynclib/asyncfunction.h>
-#include <asynclib/asyncfunctionawaitable.h>
-#include <asynclib/asynctask.h>
-#include <asynclib/asynctaskcoroutine.h>
-#include <asynclib/futureawaitable.h>
-#include <asynclib/futurechain.h>
-#include <asynclib/futurecoroutine.h>
+#include <asynclib/futureconcepts.h>
+#include <asynclib/pollablehost.h>
 
-namespace asynclib
+namespace asynclib::details
 {
 
-  template<details::__async_function_begin _Begin,
-           details::__async_function_end _End>
-  using async_function = details::__async_function<_Begin, _End>;
+  template<__future Future>
+  struct __future_pollable_base: public __pollable_host_promise
+    {
 
-  template<details::__async_task_target Return>
-  using async_task = details::__async_task<Return>;
+      virtual bool check () const noexcept override
+        {
+          return _timeout != _future.wait_for (_zero);
+        }
+
+    private:
+
+      static constexpr auto _timeout = std::future_status::timeout;
+      static constexpr auto _zero = std::chrono::milliseconds::zero ();
+
+    protected:
+
+      Future _future;
+
+      inline __future_pollable_base (Future&& future) noexcept (std::is_nothrow_move_constructible_v<Future>):
+                                                     _future (std::move (future))
+        { }
+    };
 }

@@ -160,11 +160,13 @@ namespace asynclib::details
             { g_clear_error (&this->_error); this->_error = asynclib_cpp_error_new (std::current_exception ()); }
         }
     };
+}
 
-  template<__async_function_begin _Begin, __async_function_end _End, typename Functor>
-  inline __async_function_awaitable<_Begin, _End, Functor> operator co_await (__async_function_invocation<_Begin, _End, Functor>&& invocation)
-      noexcept (std::is_nothrow_constructible_v<__async_function_awaitable<_Begin, _End, Functor>, decltype (invocation)&&>)
-    {
-      return __async_function_awaitable<_Begin, _End, Functor> (std::move (invocation));
-    }
+template<asynclib::details::__async_function_begin _Begin,
+         asynclib::details::__async_function_end _End,
+         typename Functor>
+static inline auto operator co_await (asynclib::details::__async_function_invocation<_Begin, _End, Functor>&& invocation)
+  noexcept (std::is_nothrow_constructible_v<asynclib::details::__async_function_awaitable<_Begin, _End, Functor>, decltype (invocation)&&>)
+{
+  return asynclib::details::__async_function_awaitable<_Begin, _End, Functor> (std::move (invocation));
 }
