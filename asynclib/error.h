@@ -16,15 +16,13 @@
  */
 #pragma once
 #include <exception>
-#define __GLIB_H_INSIDE__
-#include <glib/gmacros.h>
+#include <glib.h>
 
-struct _GError;
 #define ASYNCLIB_CPP_ERROR (asynclib_cpp_error_quark ())
 
-std::exception_ptr asynclib_cpp_error_get_ptr (struct _GError* error) noexcept;
-struct _GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr) noexcept;
-unsigned asynclib_cpp_error_quark (void) G_GNUC_CONST;
+std::exception_ptr asynclib_cpp_error_get_ptr (GError* error) noexcept;
+GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr) noexcept;
+GQuark asynclib_cpp_error_quark (void) G_GNUC_CONST;
 
 namespace asynclib
 {
@@ -50,22 +48,22 @@ namespace asynclib
 
       glib_error (const glib_error&) noexcept (std::is_nothrow_copy_constructible_v<std::exception>);
 
-      inline glib_error (struct _GError* g_error) noexcept (std::is_nothrow_constructible_v<std::exception>):
+      inline glib_error (GError* g_error) noexcept (std::is_nothrow_constructible_v<std::exception>):
                                                   std::exception (), _g_error (g_error)
         { }
 
-      constexpr const struct _GError* get_g_error () const noexcept { return _g_error; }
+      constexpr const GError* get_g_error () const noexcept { return _g_error; }
 
-      static glib_error literal (unsigned domain, int code, const char* message)
-        noexcept (std::is_nothrow_constructible_v<glib_error, struct _GError*>);
+      static glib_error literal (GQuark domain, int code, const char* message)
+        noexcept (std::is_nothrow_constructible_v<glib_error, GError*>);
 
-      static glib_error printf (unsigned domain, int code, const char* format, ...)
-        noexcept (std::is_nothrow_constructible_v<glib_error, struct _GError*>) G_GNUC_PRINTF (3, 4);
+      static glib_error printf (GQuark domain, int code, const char* format, ...)
+        noexcept (std::is_nothrow_constructible_v<glib_error, GError*>) G_GNUC_PRINTF (3, 4);
 
-      inline struct _GError* steal () noexcept
+      inline GError* steal () noexcept
         { auto g_error = _g_error; return (_g_error = nullptr, g_error); }
 
-      static void rethrow (struct _GError* error) G_GNUC_NORETURN;
+      static void rethrow (GError* error) G_GNUC_NORETURN;
 
       virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override;
 
