@@ -17,7 +17,7 @@
 
 glib_dep = dependency ('glib-2.0', required: true)
 
-__asynclib_headers = [ 'asynclib.h', 'error.h', 'pollablehost.h' ]
+__asynclib_headers = [ 'asynclib.h', 'error.h', 'futureasyncinvocation.h', 'pollablehost.h' ]
 __asynclib_sources = [ 'error.cc', 'pollablehost.cc' ]
 
 foreach bit: [ '', 'awaitable', 'begin', 'end', 'invocation' ]

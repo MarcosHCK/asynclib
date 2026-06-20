@@ -32,7 +32,7 @@ def load_data (file: Path) -> tuple[str, list[float]]:
 
     name = obj.get ('name', file.name)
 
-    if not isinstance (arn, list) or any ((not isinstance (n, float) for n in arn)):
+    if not isinstance (arn, list) or any ((not isinstance (n, int) and not isinstance (n, float) for n in arn)):
       raise TypeError ('invalid data field on input (should be list[float])')
 
     return name, arn

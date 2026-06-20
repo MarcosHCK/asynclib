@@ -199,6 +199,14 @@ void testing::g_test_save_times (const std::vector<double>& times) noexcept
   g_free (relative);
 
   GError* tmperr = NULL;
+  GFile* parent = g_file_get_parent (file);
+
+  if ((g_file_make_directory_with_parents (parent, NULL, &tmperr), g_object_unref (parent));
+       G_UNLIKELY (NULL != tmperr) && G_UNLIKELY (! g_error_matches (tmperr, G_IO_ERROR, G_IO_ERROR_EXISTS)))
+    g_error ("g_file_make_directory_with_parents()!: %s: %u: %s", g_quark_to_string (tmperr->domain), tmperr->code, tmperr->message);
+
+  g_clear_error (&tmperr);
+
   GOutputStream* stream = (GOutputStream*) g_file_replace (file, NULL, FALSE, G_FILE_CREATE_NONE, NULL, &tmperr);
 
   if (g_object_unref (file); G_UNLIKELY (NULL != tmperr))
