@@ -28,7 +28,7 @@ namespace asynclib::details
     };
 
   template<bool Noexcept, typename Result, typename Referrer>
-    requires (std::is_default_constructible_v<Result>)
+    requires (std::is_default_constructible_v<Result> || std::is_void_v<Result>)
   struct __async_function_end_details<Result (*) (Referrer, GAsyncResult*, GError**) noexcept (Noexcept)>
     {
 
@@ -40,7 +40,7 @@ namespace asynclib::details
     };
 
   template<bool Noexcept, typename Result>
-    requires (std::is_default_constructible_v<Result>)
+    requires (std::is_default_constructible_v<Result> || std::is_void_v<Result>)
   struct __async_function_end_details<Result (*) (GAsyncResult*, GError**) noexcept (Noexcept)>
     {
 
