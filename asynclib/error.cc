@@ -25,6 +25,8 @@ struct AsynclibCppErrorPrivate
   std::exception_ptr exception_ptr;
 };
 
+#define ASYNCLIB_CPP_ERROR (asynclib_cpp_error_quark ())
+
 static void asynclib_cpp_error_private_clear (AsynclibCppErrorPrivate* priv) noexcept;
 static void asynclib_cpp_error_private_copy (const AsynclibCppErrorPrivate* src, AsynclibCppErrorPrivate* dst) noexcept;
 static void asynclib_cpp_error_private_init (AsynclibCppErrorPrivate* priv) noexcept;
@@ -46,7 +48,7 @@ static void asynclib_cpp_error_private_init (AsynclibCppErrorPrivate* dst) noexc
   new (&dst->exception_ptr) std::exception_ptr ();
 }
 
-std::exception_ptr asynclib_cpp_error_get_ptr (struct _GError* error) noexcept
+static std::exception_ptr asynclib_cpp_error_get_ptr (struct _GError* error) noexcept
 {
 
   auto priv = asynclib_cpp_error_get_private (error);
@@ -54,7 +56,7 @@ std::exception_ptr asynclib_cpp_error_get_ptr (struct _GError* error) noexcept
 return ptr;
 }
 
-GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr) noexcept
+static GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr) noexcept
 {
 
   auto error = g_error_new_literal (ASYNCLIB_CPP_ERROR, 0, "c++ exception thrown");
@@ -63,59 +65,23 @@ GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr) noexcept
 return error;
 }
 
-void glib_error::unlink () noexcept
+std::exception_ptr asynclib::from_glib_error (GError* error) noexcept
 {
 
-  if (nullptr != _g_error)
-    _g_error = (g_error_free (_g_error), nullptr);
+  if (std::exception_ptr ptr; ASYNCLIB_CPP_ERROR != error->domain)
+
+    return std::make_exception_ptr (glib_error (error));
+  else
+    return (ptr = asynclib_cpp_error_get_ptr (error), g_error_free (error), ptr);
 }
 
-glib_error::glib_error (const glib_error& o) noexcept (std::is_nothrow_copy_constructible_v<std::exception>):
-                                             std::exception (o), _g_error (g_error_copy (o._g_error))
-{ }
-
-glib_error glib_error::literal (unsigned domain, int code, const char* message)
-  noexcept (std::is_nothrow_constructible_v<glib_error, struct _GError*>)
+GError* asynclib::to_glib_error (std::exception_ptr ptr) noexcept
 {
 
-  auto error = g_error_new_literal (domain, code, message);
-return glib_error (error);
-}
-
-glib_error glib_error::printf (unsigned domain, int code, const char* format, ...)
-  noexcept (std::is_nothrow_constructible_v<glib_error, struct _GError*>)
-{
-
-  va_list l;
-  va_start (l, format);
-
-  auto error = g_error_new_valist (domain, code, format, l);
-  va_end (l);
-return glib_error (error);
-}
-
-void glib_error::rethrow (struct _GError* error)
-{
-
-  if (ASYNCLIB_CPP_ERROR != error->domain)
-    throw glib_error (error);
-
-  auto exception_ptr = asynclib_cpp_error_get_ptr (error);
-  g_error_free (error);
-
-  std::rethrow_exception (exception_ptr);
-};
-
-const char* glib_error::what () const _GLIBCXX_TXN_SAFE_DYN noexcept
-{
-  return ((GError*) _g_error)->message;
-}
-
-glib_error& glib_error::operator= (const glib_error& o) noexcept
-{
-
-  if (nullptr != _g_error)
-    _g_error = (g_error_free (_g_error), nullptr);
-
-return (_g_error = g_error_copy (o._g_error), *this);
+  try
+    { std::rethrow_exception (ptr); }
+  catch (asynclib::glib_error& exception)
+    { return exception.steal (); }
+  catch (...)
+    { return asynclib_cpp_error_new (std::current_exception ()); }
 }

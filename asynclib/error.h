@@ -18,25 +18,26 @@
 #include <exception>
 #include <glib.h>
 
-#define ASYNCLIB_CPP_ERROR (asynclib_cpp_error_quark ())
+G_BEGIN_DECLS
 
-std::exception_ptr asynclib_cpp_error_get_ptr (GError* error) noexcept;
-GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr) noexcept;
-GQuark asynclib_cpp_error_quark (void) G_GNUC_CONST;
+  GQuark asynclib_cpp_error_quark (void) G_GNUC_CONST;
+
+G_END_DECLS
 
 namespace asynclib
 {
+
+  std::exception_ptr from_glib_error (GError* error) noexcept;
+  GError* to_glib_error (std::exception_ptr ptr) noexcept;
 
   class glib_error: public std::exception
     {
 
       struct _GError* _g_error = nullptr;
-
-      void unlink () noexcept;
     public:
 
       inline ~glib_error () noexcept
-        { unlink (); }
+        { g_clear_error (&_g_error); }
 
       inline glib_error () noexcept (std::is_nothrow_constructible_v<std::exception>):
                            glib_error (nullptr)
@@ -46,36 +47,47 @@ namespace asynclib
                                          std::exception (std::move (o)), _g_error (o._g_error)
         { o._g_error = nullptr; }
 
-      glib_error (const glib_error&) noexcept (std::is_nothrow_copy_constructible_v<std::exception>);
+      inline glib_error (const glib_error& o) noexcept (std::is_nothrow_copy_constructible_v<std::exception>):
+                                             _g_error (g_error_copy (o._g_error))
+        { }
 
       inline glib_error (GError* g_error) noexcept (std::is_nothrow_constructible_v<std::exception>):
                                                   std::exception (), _g_error (g_error)
         { }
 
-      constexpr const GError* get_g_error () const noexcept { return _g_error; }
+      inline glib_error& operator= (glib_error&& o) noexcept
+        {
+          g_clear_error (&_g_error);
+          return (std::swap (_g_error, o._g_error), *this);
+        }
 
-      static glib_error literal (GQuark domain, int code, const char* message)
-        noexcept (std::is_nothrow_constructible_v<glib_error, GError*>);
+      inline glib_error& operator= (const glib_error& o) noexcept
+        {
+          g_error_free (_g_error);
+          return (_g_error = g_error_copy (o._g_error), *this);
+        }
 
-      static glib_error printf (GQuark domain, int code, const char* format, ...)
-        noexcept (std::is_nothrow_constructible_v<glib_error, GError*>) G_GNUC_PRINTF (3, 4);
+      static inline glib_error literal (GQuark domain, int code, const char* message)
+          noexcept (std::is_nothrow_constructible_v<glib_error, GError*>)
+        {
+          return glib_error (g_error_new_literal (domain, code, message));
+        }
+
+      static inline glib_error printf (GQuark domain, int code, const char* format, ...)
+          noexcept (std::is_nothrow_constructible_v<glib_error, GError*>) G_GNUC_PRINTF (3, 4)
+        {
+
+          va_list l;
+          va_start (l, format);
+
+          auto error = glib_error (g_error_new_valist (domain, code, format, l));
+        return (va_end (l), error);
+        }
 
       inline GError* steal () noexcept
         { auto g_error = _g_error; return (_g_error = nullptr, g_error); }
 
-      static void rethrow (GError* error) G_GNUC_NORETURN;
-
-      virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override;
-
-      inline glib_error& operator= (glib_error&& o) noexcept
-        {
-          unlink ();
-          return (std::swap (_g_error, o._g_error), *this);
-        }
-
-      glib_error& operator= (const glib_error& o) noexcept;
-
-      inline bool operator== (std::nullptr_t) const noexcept
-        { return nullptr == _g_error; }
+      virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override
+        { return _g_error->message; }
     };
 }

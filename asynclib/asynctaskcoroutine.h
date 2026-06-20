@@ -41,13 +41,7 @@ namespace asynclib::details
 
       inline void unhandled_exception ()
         {
-
-          try
-            { std::rethrow_exception (std::current_exception ()); }
-          catch (asynclib::glib_error& error)
-            { g_task_return_error (_task, error.steal ()); }
-          catch (...)
-            { g_task_return_error (_task, asynclib_cpp_error_new (std::current_exception ())); }
+          g_task_return_error (_task, to_glib_error (std::current_exception ()));
         }
 
     protected:

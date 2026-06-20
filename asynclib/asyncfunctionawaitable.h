@@ -44,7 +44,7 @@ namespace asynclib::details
         {
 
           if (G_UNLIKELY (NULL != _error))
-            glib_error::rethrow (g_steal_pointer (&_error));
+            std::rethrow_exception (from_glib_error (g_steal_pointer (&_error)));
 
         return std::move (_result).value ();
         }
@@ -91,7 +91,7 @@ namespace asynclib::details
         {
 
           if (G_UNLIKELY (NULL != _error))
-            glib_error::rethrow (g_steal_pointer (&_error));
+            std::rethrow_exception (from_glib_error (g_steal_pointer (&_error)));
         }
 
     protected:
@@ -164,7 +164,7 @@ namespace asynclib::details
           else try
             { __async_function_awaitable_base<_Begin, _End, Functor, typename end_details::return_type>::await_complete (source_object, async_result); }
           catch (...)
-            { g_clear_error (&this->_error); this->_error = asynclib_cpp_error_new (std::current_exception ()); }
+            { g_clear_error (&this->_error); this->_error = to_glib_error (std::current_exception ()); }
         }
     };
 }
