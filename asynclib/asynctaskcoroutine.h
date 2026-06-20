@@ -33,7 +33,7 @@ namespace asynclib::details
             _task = (g_object_unref (_task), nullptr);
         }
 
-      inline std::suspend_always final_suspend () noexcept
+      inline std::suspend_never final_suspend () noexcept
         { return { }; }
 
       inline std::suspend_always initial_suspend () noexcept

@@ -129,24 +129,31 @@ namespace asynclib::details
           noexcept (std::is_nothrow_invocable_v<__async_function_invocation<_Begin, _End, Functor>, GAsyncReadyCallback, gpointer>)
         {
 
-          _handle = handle;
-          this->_invocation (async_ready, this);
+          struct Data
+            {
+
+              std::coroutine_handle<> handle;
+              __async_function_awaitable<_Begin, _End, Functor>& self;
+
+              inline Data (std::coroutine_handle<> _handle, __async_function_awaitable<_Begin, _End, Functor>& _self) noexcept:
+                  handle (_handle), self (_self)
+                { }
+            };
+
+          auto data = new (g_slice_alloc0 (sizeof (Data))) Data (handle, *this);
+
+          this->_invocation ([](GObject* source_object, GAsyncResult* async_result, gpointer user_data)
+            {
+
+              auto handle = ((Data*) user_data)->handle;
+
+              ((Data*) user_data)->self.await_complete (source_object, async_result);
+              g_slice_free1 (sizeof (Data), (((Data*) user_data)->~Data (), user_data));
+              handle.resume ();
+            }, data);
         }
 
     private:
-
-      std::coroutine_handle<> _handle;
-
-      static inline void async_ready (GObject* source_object, GAsyncResult* async_result, gpointer user_data) noexcept
-        {
-
-          auto self = ((__async_function_awaitable<_Begin, _End, Functor>*) user_data);
-          auto handle = std::move (self->_handle);
-
-          self->_handle = std::coroutine_handle<> (nullptr);
-          self->await_complete (source_object, async_result);
-          handle.resume ();
-        }
 
       inline void await_complete (GObject* source_object, GAsyncResult* async_result) noexcept
         {

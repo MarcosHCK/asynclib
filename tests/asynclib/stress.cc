@@ -30,7 +30,7 @@ int main (int argc, char* argv[])
   g_test_init (&argc, &argv, NULL);
 
   socket_server server (8000, "1MiB");
-  constexpr guint tries = 200;
+  constexpr guint tries = 500;
 
   g_test_add_ (TESTPATHROOT "/native", [&server]
     {
@@ -465,7 +465,7 @@ static asynclib::async_task<std::pair<gsize, gchar*>> io_work_ours (const gchar*
   try
     {
 
-      char buffer [1024];
+      char buffer [2048];
       gssize read;
 
       for (auto input_stream = g_io_stream_get_input_stream (connection);
