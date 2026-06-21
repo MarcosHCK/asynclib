@@ -17,7 +17,7 @@
 #pragma once
 #include <asynclib/asyncfunctionbegin.h>
 #include <asynclib/asyncfunctionend.h>
-#include <asynclib/asyncfunctioninvocation.h>
+#include <asynclib/asynctask.h>
 
 namespace asynclib::details
 {
@@ -48,7 +48,7 @@ namespace asynclib::details
               begin (args..., callback, user_data);
             };
 
-        return __async_function_invocation<_Begin, _End, decltype (lambda)> (std::move (lambda), end);
+        return __async_task<_Begin, _End, decltype (lambda)> (std::move (lambda), end);
         }
 
       inline constexpr __async_function_base (_Begin _begin, _End _end) noexcept: begin (_begin), end (_end) 

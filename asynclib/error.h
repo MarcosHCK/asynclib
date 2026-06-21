@@ -18,17 +18,8 @@
 #include <exception>
 #include <glib.h>
 
-G_BEGIN_DECLS
-
-  GQuark asynclib_cpp_error_quark (void) G_GNUC_CONST;
-
-G_END_DECLS
-
 namespace asynclib
 {
-
-  std::exception_ptr from_glib_error (GError* error) noexcept;
-  GError* to_glib_error (std::exception_ptr ptr) noexcept;
 
   class glib_error: public std::exception
     {
@@ -55,6 +46,8 @@ namespace asynclib
       inline ~glib_error () noexcept
         { ((NULL == _g_error) ? NULL : (_g_error = (g_error_free (_g_error), nullptr))); }
 
+      static std::exception_ptr from_glib_error (GError* error) noexcept;
+
       static inline glib_error literal (GQuark domain, int code, const char* message)
           noexcept (std::is_nothrow_constructible_v<glib_error, GError*>)
         {
@@ -72,11 +65,7 @@ namespace asynclib
         return (va_end (l), error);
         }
 
-      inline GError* steal () noexcept
-        {
-          auto g_error = _g_error;
-          return (_g_error = nullptr, g_error);
-        }
+      static GError* to_glib_error (std::exception_ptr ptr) noexcept;
 
       virtual const char* what () const _GLIBCXX_TXN_SAFE_DYN noexcept override
         { return _g_error->message; }

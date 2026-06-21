@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <asynclib/asyncfunctioninvocation.h>
+#include <asynclib/asynctask.h>
 #include <asynclib/error.h>
 #include <coroutine>
 #include <optional>
@@ -24,19 +24,18 @@ namespace asynclib::details
 {
 
   template<__async_function_begin _Begin, __async_function_end _End, typename Functor, typename Return>
-    requires (std::is_move_constructible_v<Return>)
-  struct __async_function_awaitable_base
+  struct __async_task_awaitable_base
     {
 
-      inline constexpr ~__async_function_awaitable_base () noexcept
+      inline constexpr ~__async_task_awaitable_base () noexcept
         {
 
           if (G_UNLIKELY (NULL != _error))
             g_error_free (_error);
         }
 
-      inline constexpr __async_function_awaitable_base (__async_function_invocation<_Begin, _End, Functor>&& invocation)
-          noexcept (std::is_nothrow_move_constructible_v<__async_function_invocation<_Begin, _End, Functor>>):
+      inline constexpr __async_task_awaitable_base (__async_task<_Begin, _End, Functor>&& invocation)
+          noexcept (std::is_nothrow_move_constructible_v<__async_task<_Begin, _End, Functor>>):
           _error (nullptr), _invocation (std::move (invocation))
         { }
 
@@ -44,7 +43,7 @@ namespace asynclib::details
         {
 
           if (G_UNLIKELY (NULL != _error))
-            std::rethrow_exception (from_glib_error (g_steal_pointer (&_error)));
+            std::rethrow_exception (glib_error::from_glib_error (g_steal_pointer (&_error)));
 
         return std::move (_result).value ();
         }
@@ -68,22 +67,22 @@ namespace asynclib::details
         }
 
       GError* _error;
-      __async_function_invocation<_Begin, _End, Functor> _invocation;
+      __async_task<_Begin, _End, Functor> _invocation;
     };
 
   template<__async_function_begin _Begin, __async_function_end _End, typename Functor>
-  struct __async_function_awaitable_base<_Begin, _End, Functor, void>
+  struct __async_task_awaitable_base<_Begin, _End, Functor, void>
     {
 
-      inline constexpr ~__async_function_awaitable_base () noexcept
+      inline constexpr ~__async_task_awaitable_base () noexcept
         {
 
           if (G_UNLIKELY (NULL != _error))
             g_error_free (_error);
         }
 
-      inline constexpr __async_function_awaitable_base (__async_function_invocation<_Begin, _End, Functor>&& invocation)
-          noexcept (std::is_nothrow_move_constructible_v<__async_function_invocation<_Begin, _End, Functor>>):
+      inline constexpr __async_task_awaitable_base (__async_task<_Begin, _End, Functor>&& invocation)
+          noexcept (std::is_nothrow_move_constructible_v<__async_task<_Begin, _End, Functor>>):
           _error (nullptr), _invocation (std::move (invocation))
         { }
 
@@ -91,7 +90,7 @@ namespace asynclib::details
         {
 
           if (G_UNLIKELY (NULL != _error))
-            std::rethrow_exception (from_glib_error (g_steal_pointer (&_error)));
+            std::rethrow_exception (glib_error::from_glib_error (g_steal_pointer (&_error)));
         }
 
     protected:
@@ -107,35 +106,35 @@ namespace asynclib::details
         }
 
       GError* _error;
-      __async_function_invocation<_Begin, _End, Functor> _invocation;
+      __async_task<_Begin, _End, Functor> _invocation;
     };
 
   template<__async_function_begin _Begin, __async_function_end _End, typename Functor>
-  struct __async_function_awaitable:
-      public __async_function_awaitable_base<_Begin, _End, Functor, typename __async_function_end_details<_End>::return_type>
+  struct __async_task_awaitable:
+      public __async_task_awaitable_base<_Begin, _End, Functor, typename __async_function_end_details<_End>::return_type>
     {
 
       using end_details = __async_function_end_details<_End>;
 
-      inline constexpr __async_function_awaitable (__async_function_invocation<_Begin, _End, Functor>&& invocation)
-          noexcept (std::is_nothrow_constructible_v<__async_function_awaitable_base<_Begin, _End, Functor, typename end_details::return_type>, decltype (invocation)&&>):
-          __async_function_awaitable_base<_Begin, _End, Functor, typename end_details::return_type> (std::move (invocation))
+      inline constexpr __async_task_awaitable (__async_task<_Begin, _End, Functor>&& invocation)
+          noexcept (std::is_nothrow_constructible_v<__async_task_awaitable_base<_Begin, _End, Functor, typename end_details::return_type>, decltype (invocation)&&>):
+          __async_task_awaitable_base<_Begin, _End, Functor, typename end_details::return_type> (std::move (invocation))
         { }
 
       inline bool await_ready () const noexcept 
         { return false; }
 
       inline void await_suspend (std::coroutine_handle<> handle)
-          noexcept (std::is_nothrow_invocable_v<__async_function_invocation<_Begin, _End, Functor>, GAsyncReadyCallback, gpointer>)
+          noexcept (std::is_nothrow_invocable_v<__async_task<_Begin, _End, Functor>, GAsyncReadyCallback, gpointer>)
         {
 
           struct Data
             {
 
               std::coroutine_handle<> handle;
-              __async_function_awaitable<_Begin, _End, Functor>& self;
+              __async_task_awaitable<_Begin, _End, Functor>& self;
 
-              inline Data (std::coroutine_handle<> _handle, __async_function_awaitable<_Begin, _End, Functor>& _self) noexcept:
+              inline Data (std::coroutine_handle<> _handle, __async_task_awaitable<_Begin, _End, Functor>& _self) noexcept:
                   handle (_handle), self (_self)
                 { }
             };
@@ -160,11 +159,11 @@ namespace asynclib::details
 
           if constexpr (end_details::noexcept_v)
 
-            { __async_function_awaitable_base<_Begin, _End, Functor, typename end_details::return_type>::await_complete (source_object, async_result); }
+            { __async_task_awaitable_base<_Begin, _End, Functor, typename end_details::return_type>::await_complete (source_object, async_result); }
           else try
-            { __async_function_awaitable_base<_Begin, _End, Functor, typename end_details::return_type>::await_complete (source_object, async_result); }
+            { __async_task_awaitable_base<_Begin, _End, Functor, typename end_details::return_type>::await_complete (source_object, async_result); }
           catch (...)
-            { g_clear_error (&this->_error); this->_error = to_glib_error (std::current_exception ()); }
+            { g_clear_error (&this->_error); this->_error = glib_error::to_glib_error (std::current_exception ()); }
         }
     };
 }
@@ -172,8 +171,8 @@ namespace asynclib::details
 template<asynclib::details::__async_function_begin _Begin,
          asynclib::details::__async_function_end _End,
          typename Functor>
-static inline auto operator co_await (asynclib::details::__async_function_invocation<_Begin, _End, Functor>&& invocation)
-  noexcept (std::is_nothrow_constructible_v<asynclib::details::__async_function_awaitable<_Begin, _End, Functor>, decltype (invocation)&&>)
+static inline auto operator co_await (asynclib::details::__async_task<_Begin, _End, Functor>&& invocation)
+  noexcept (std::is_nothrow_constructible_v<asynclib::details::__async_task_awaitable<_Begin, _End, Functor>, decltype (invocation)&&>)
 {
-  return asynclib::details::__async_function_awaitable<_Begin, _End, Functor> (std::move (invocation));
+  return asynclib::details::__async_task_awaitable<_Begin, _End, Functor> (std::move (invocation));
 }

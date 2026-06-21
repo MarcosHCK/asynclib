@@ -26,6 +26,7 @@ struct AsynclibCppErrorPrivate
 };
 
 #define ASYNCLIB_CPP_ERROR (asynclib_cpp_error_quark ())
+static GQuark asynclib_cpp_error_quark (void) G_GNUC_CONST;
 
 static void asynclib_cpp_error_private_clear (AsynclibCppErrorPrivate* priv) noexcept;
 static void asynclib_cpp_error_private_copy (const AsynclibCppErrorPrivate* src, AsynclibCppErrorPrivate* dst) noexcept;
@@ -65,7 +66,7 @@ static GError* asynclib_cpp_error_new (std::exception_ptr exception_ptr) noexcep
 return error;
 }
 
-std::exception_ptr asynclib::from_glib_error (GError* error) noexcept
+std::exception_ptr asynclib::glib_error::from_glib_error (GError* error) noexcept
 {
 
   if (std::exception_ptr ptr; ASYNCLIB_CPP_ERROR != error->domain)
@@ -75,13 +76,13 @@ std::exception_ptr asynclib::from_glib_error (GError* error) noexcept
     return (ptr = asynclib_cpp_error_get_ptr (error), g_error_free (error), ptr);
 }
 
-GError* asynclib::to_glib_error (std::exception_ptr ptr) noexcept
+GError* asynclib::glib_error::to_glib_error (std::exception_ptr ptr) noexcept
 {
 
   try
     { std::rethrow_exception (ptr); }
   catch (asynclib::glib_error& exception)
-    { return exception.steal (); }
+    { return g_steal_pointer (&exception._g_error); }
   catch (...)
     { return asynclib_cpp_error_new (std::current_exception ()); }
 }

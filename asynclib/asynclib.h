@@ -16,9 +16,10 @@
  */
 #pragma once
 #include <asynclib/asyncfunction.h>
-#include <asynclib/asyncfunctionawaitable.h>
 #include <asynclib/asynctask.h>
+#include <asynclib/asynctaskawaitable.h>
 #include <asynclib/asynctaskcoroutine.h>
+#include <functional>
 
 namespace asynclib
 {
@@ -28,5 +29,7 @@ namespace asynclib
   using async_function = details::__async_function<_Begin, _End>;
 
   template<details::__async_task_target Return>
-  using async_task = details::__async_task<Return>;
+  using async_task = details::__async_task<void (*) (GAsyncReadyCallback, gpointer),
+                                           Return (*) (GAsyncResult*, GError**),
+                                           std::move_only_function<void (GAsyncReadyCallback, gpointer)>>;
 }

@@ -41,7 +41,7 @@ namespace asynclib::details
 
       inline void unhandled_exception ()
         {
-          g_task_return_error (_task, to_glib_error (std::current_exception ()));
+          g_task_return_error (_task, glib_error::to_glib_error (std::current_exception ()));
         }
 
     protected:
@@ -126,30 +126,36 @@ namespace asynclib::details
 namespace std
 {
 
-  template<asynclib::details::__async_task_target Return,
+  template<asynclib::details::__async_function_begin _Begin,
+           asynclib::details::__async_function_end _End,
+           asynclib::details::__async_task_target Functor,
            typename... Args>
-  struct coroutine_traits<asynclib::details::__async_task<Return>, Args ...>
+  struct coroutine_traits<asynclib::details::__async_task<_Begin, _End, Functor>, Args ...>
     {
 
       struct promise_type;
     };
 
-  template<asynclib::details::__async_task_target Return,
+  template<asynclib::details::__async_function_begin _Begin,
+           asynclib::details::__async_function_end _End,
+           asynclib::details::__async_task_target Functor,
            typename... Args>
-  struct coroutine_traits<asynclib::details::__async_task<Return>, Args ...>::promise_type:
-      public asynclib::details::__async_task_promise_completable<Return>
+  struct coroutine_traits<asynclib::details::__async_task<_Begin, _End, Functor>, Args ...>::promise_type:
+      public asynclib::details::__async_task_promise_completable<typename asynclib::details::__async_function_end_details<_End>::return_type>
     {
 
-      inline asynclib::details::__async_task<Return> get_return_object () noexcept
+      using return_type = typename asynclib::details::__async_function_end_details<_End>::return_type;
+
+      inline asynclib::details::__async_task<_Begin, _End, Functor> get_return_object () noexcept
         {
 
           auto begin = [this] (GAsyncReadyCallback callback, gpointer user_data) -> void
             {
 
               this->_task = g_task_new (NULL, NULL, callback, user_data);
-              std::coroutine_handle<coroutine_traits<asynclib::details::__async_task<Return>, Args ...>::promise_type>::from_promise (*this).resume ();
+              std::coroutine_handle<coroutine_traits<asynclib::details::__async_task<_Begin, _End, Functor>, Args ...>::promise_type>::from_promise (*this).resume ();
             };
-        return asynclib::details::__async_task<Return> (std::move (begin), asynclib::details::__async_task_promise_completable<Return>::fulfill);
+        return asynclib::details::__async_task<_Begin, _End, Functor> (std::move (begin), asynclib::details::__async_task_promise_completable<return_type>::fulfill);
         }
     };
 }
