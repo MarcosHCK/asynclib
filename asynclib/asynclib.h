@@ -19,9 +19,6 @@
 #include <asynclib/asyncfunctionawaitable.h>
 #include <asynclib/asynctask.h>
 #include <asynclib/asynctaskcoroutine.h>
-#include <asynclib/futureawaitable.h>
-#include <asynclib/futurechain.h>
-#include <asynclib/futurecoroutine.h>
 
 namespace asynclib
 {

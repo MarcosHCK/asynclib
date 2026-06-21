@@ -22,30 +22,6 @@ c_args = [ '-DG_LOG_DOMAIN="Asynclib.Tests"',
 
 testpath = meson.current_source_dir ().replace (basepath + '/', '')
 
-test ((testpath + '/future').replace ('/', '.'),
-      executable ('future_',
-            c_args: c_args +
-                    [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'future') ],
-            cpp_args: c_args +
-                      [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'future') ],
-            build_by_default: false,
-            dependencies: [ config_dep, __asynclib_dep, __testing_dep ],
-            sources: 'future.cc'),
-      env: [ 'G_TEST_BUILDDIR=@0@'.format (meson.current_build_dir ()),
-             'G_TEST_SRCDIR=@0@'.format (meson.current_source_dir ()) ], )
-
-test ((testpath + '/futuretask').replace ('/', '.'),
-      executable ('futuretask',
-            c_args: c_args +
-                    [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'futuretask') ],
-            cpp_args: c_args +
-                      [ '-DTESTPATHROOT="@0@"'.format (testpathroot / testpath / 'futuretask') ],
-            build_by_default: false,
-            dependencies: [ config_dep, __asynclib_dep, __testing_dep ],
-            sources: 'futuretask.cc'),
-      env: [ 'G_TEST_BUILDDIR=@0@'.format (meson.current_build_dir ()),
-             'G_TEST_SRCDIR=@0@'.format (meson.current_source_dir ()) ], )
-
 test ((testpath + '/stress').replace ('/', '.'),
       executable ('stress',
             c_args: c_args +

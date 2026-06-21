@@ -17,8 +17,8 @@
 
 glib_dep = dependency ('glib-2.0', required: true)
 
-__asynclib_headers = [ 'asynclib.h', 'error.h', 'futureasyncinvocation.h', 'pollablehost.h' ]
-__asynclib_sources = [ 'error.cc', 'pollablehost.cc' ]
+__asynclib_headers = [ 'asynclib.h', 'error.h' ]
+__asynclib_sources = [ 'error.cc' ]
 
 foreach bit: [ '', 'awaitable', 'begin', 'end', 'invocation' ]
 
@@ -30,10 +30,6 @@ foreach bit: [ '', 'coroutine' ]
   __asynclib_headers += [ 'asynctask@0@.h'.format (bit) ]
 endforeach
 
-foreach bit: [ 'awaitable', 'chain', 'concepts', 'coroutine', 'pollable' ]
-
-  __asynclib_headers += [ 'future@0@.h'.format (bit) ]
-endforeach
 
 __asynclib_lib = library ('asynclib',
   c_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
