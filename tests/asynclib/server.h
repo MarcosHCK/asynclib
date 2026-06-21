@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <asynclib/error.h>
+#include <asynclib/gliberror.h>
 #include <csignal>
 #include <gio/gio.h>
 #include <string_view>

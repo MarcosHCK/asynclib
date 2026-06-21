@@ -32,7 +32,7 @@ namespace asynclib
         { }
 
       inline glib_error (glib_error&& o) noexcept (std::is_nothrow_move_constructible_v<std::exception>):
-                                         std::exception (std::move (o)), _g_error (o._g_error)
+                                         _g_error (o._g_error)
         { o._g_error = nullptr; }
 
       inline glib_error (const glib_error& o) noexcept (std::is_nothrow_copy_constructible_v<std::exception>):
@@ -40,7 +40,7 @@ namespace asynclib
         { }
 
       inline glib_error (GError* g_error) noexcept (std::is_nothrow_constructible_v<std::exception>):
-                                          std::exception (), _g_error (g_error)
+                                          _g_error (g_error)
         { }
 
       inline ~glib_error () noexcept

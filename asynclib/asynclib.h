@@ -19,6 +19,7 @@
 #include <asynclib/asynctask.h>
 #include <asynclib/asynctaskawaitable.h>
 #include <asynclib/asynctaskcoroutine.h>
+#include <asynclib/asynctasktupleawaitable.h>
 #include <functional>
 
 namespace asynclib

@@ -24,6 +24,13 @@ static asynclib::async_task<int> simple (int value) noexcept
 co_return value;
 }
 
+static asynclib::async_task<int> tuple (int value) noexcept
+{
+
+  auto [ value1, value2 ] = co_await std::tuple { simple (1), simple (2) };
+co_return value ^ (value1 | value2);
+}
+
 static asynclib::async_task<int> wrapped (int value) noexcept
 {
 
@@ -40,6 +47,14 @@ int main (int argc, char* argv[])
 
       auto rand = g_test_rand_int ();
       auto task = simple (rand);
+      (void) task;
+    });
+
+  g_test_add_ (TESTPATHROOT "/new/tuple", []
+    {
+
+      auto rand = g_test_rand_int ();
+      auto task = tuple (rand);
       (void) task;
     });
 
@@ -74,6 +89,31 @@ int main (int argc, char* argv[])
         g_main_context_iteration (main_context, FALSE);
 
       g_assert_cmpint (0, ==, rand ^ data.result);
+    });
+
+  g_test_add_ (TESTPATHROOT "/execute/tuple", []
+    {
+
+      auto rand = g_test_rand_int ();
+      auto task = tuple (rand);
+
+      struct D { decltype (task.end) end; guint ready; int result; }
+        data = { .end = task.end, .ready = 0, .result = 0, };
+
+      task.begin ([](GObject*, GAsyncResult* async_result, gpointer user_data)
+        {
+          auto p = (D*) user_data;
+          auto e = (GError*) nullptr;
+
+          p->result = p->end (async_result, &e);
+          g_assert_no_error (e);
+          g_atomic_int_set (&p->ready, 1);
+        }, &data);
+
+      for (auto main_context = g_main_context_get_thread_default (); 0 == g_atomic_int_get (&data.ready);)
+        g_main_context_iteration (main_context, FALSE);
+
+      g_assert_cmpint (3, ==, rand ^ data.result);
     });
 
   g_test_add_ (TESTPATHROOT "/execute/wrapped", []

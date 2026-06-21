@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include <config.h>
-#include <asynclib/error.h>
-#include <exception>
+#include <asynclib/gliberror.h>
 #include <glib.h>
 using namespace asynclib;
 

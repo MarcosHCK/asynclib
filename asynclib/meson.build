@@ -15,10 +15,10 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-glib_dep = dependency ('glib-2.0', required: true)
+gio_dep = dependency ('gio-2.0', required: true)
 
-__asynclib_headers = [ 'asynclib.h', 'error.h' ]
-__asynclib_sources = [ 'error.cc' ]
+__asynclib_headers = [ 'aggregateerror.h', 'asynclib.h', 'gliberror.h' ]
+__asynclib_sources = [ 'aggregateerror.cc', 'asynctasktupleawaitable.cc', 'gliberror.cc' ]
 
 foreach bit: [ '', 'begin', 'end' ]
 
@@ -38,10 +38,10 @@ __asynclib_lib = library ('asynclib',
   cpp_args: [ '-DG_LOG_DOMAIN="Asynclib"', '-DG_LOG_USE_STRUCTURED=1',
               '-DBUILD_DIR="@0@"'.format (meson.current_build_dir ()),
               '-DSOURCE_DIR="@0@"'.format (meson.current_source_dir ()) ],
-  dependencies: [ config_dep, glib_dep ],
+  dependencies: [ config_dep, gio_dep ],
   sources: [ __asynclib_headers, __asynclib_sources ])
 
-__asynclib_dep = declare_dependency (link_with: __asynclib_lib)
+__asynclib_dep = declare_dependency (dependencies: gio_dep, link_with: __asynclib_lib)
 
 meson.override_dependency ('asynclib', __asynclib_dep)
 

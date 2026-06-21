@@ -16,7 +16,7 @@
  */
 #pragma once
 #include <asynclib/asynctask.h>
-#include <asynclib/error.h>
+#include <asynclib/gliberror.h>
 #include <coroutine>
 #include <new>
 
